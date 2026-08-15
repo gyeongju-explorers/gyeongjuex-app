@@ -9,7 +9,7 @@ import { ThemedView } from '@/components/themed-view';
 import { WebBadge } from '@/components/web-badge';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 
-// 안녕
+// test
 
 function getDevMenuHint() {
   if (Platform.OS === 'web') {
