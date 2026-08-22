@@ -11,6 +11,7 @@
 | 런타임 | React Native 0.86.2, React 19.2.3 |
 | 웹 지원 | react-native-web (모바일 + 웹 동시 타겟) |
 | UI / 애니메이션 | react-native-reanimated, react-native-gesture-handler, expo-glass-effect, @expo/ui |
+| API 통신 | axios |
 | 린트 / 포맷 | ESLint (eslint-config-expo) + Prettier |
 | 패키지 매니저 | npm |
 

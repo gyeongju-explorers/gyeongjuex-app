@@ -60,11 +60,16 @@ chore: eslint, prettier 설정 추가
 - 커스텀 훅: `use` 접두사 (예: `useTouristSpots`)
 
 ### 폴더 구조
-- `src/app/`: 화면 및 라우팅 (expo-router 파일 기반 라우팅)
-- `src/components/`: 재사용 가능한 컴포넌트
-- `src/components/ui/`: 범용 UI 컴포넌트 (버튼, 카드 등 도메인 무관)
+- `src/app/`: expo-router 라우팅 전용. 실제 화면 구현은 두지 않고 `src/pages/`를 재export만 함
+- `src/pages/`: 실제 화면(페이지) 구현
+- `src/components/global/`: 여러 화면에서 재사용하는 공통 컴포넌트
+- `src/components/{PageName}/`: 특정 화면에서만 쓰는 컴포넌트 (예: `src/components/Home/`)
+- `src/api/`: 백엔드 통신(axios) 전용. fetch/axios 호출은 여기서만 함
+- `src/types/`: 도메인별 타입 정의
 - `src/hooks/`: 커스텀 훅
 - `src/constants/`: 상수, 테마 값 등
+
+폴더별로 실제 코드를 어떻게 작성하는지는 [DEVELOPMENT_GUIDE.md](DEVELOPMENT_GUIDE.md) 참고.
 
 ### TypeScript
 - `any` 사용 금지. 타입을 모르면 `unknown` + 타입 좁히기 사용.
