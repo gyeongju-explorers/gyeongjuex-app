@@ -2,12 +2,14 @@ import { StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedView } from '@/components/global/themed-view';
+import HomeButton from '@/components/Home/HomeButton';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 
 export default function Home() {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea} />
+      <HomeButton />
     </ThemedView>
   );
 }
