@@ -1,18 +1,38 @@
-import { StyleSheet, Text } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { ThemedView } from '@/components/global/themed-view';
-import HomeButton from '@/components/Home/HomeButton';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import Button from '@/components/global/Button';
+import CheckboxText from '@/components/global/CheckboxText';
 import { Input } from '@/components/global/Input';
+import { ThemedView } from '@/components/global/themed-view';
+import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 
 export default function Login() {
   return (
     <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea} />
-      <HomeButton />
-      <Text>로그인</Text>
-      <Input placeholder="login"/>
+      <SafeAreaView style={styles.safeArea}>
+        <View className="gap-16 pt-450">
+          <View className="gap-8">
+            <Input placeholder="아이디" />
+            <Input placeholder="비밀번호" />
+          </View>
+          <CheckboxText text="자동 로그인" />
+          <Button text="로그인" theme="dark" />
+          <View className="my-10 flex-row items-center justify-center gap-16">
+            <TouchableOpacity>
+              <Text className="text-gray-500">아이디 찾기</Text>
+            </TouchableOpacity>
+            <View className="h-12 w-1 bg-gray-300" />
+            <TouchableOpacity>
+              <Text className="text-gray-500">비밀번호 찾기</Text>
+            </TouchableOpacity>
+            <View className="h-12 w-1 bg-gray-300" />
+            <TouchableOpacity>
+              <Text className="text-gray-500">회원가입</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </SafeAreaView>
     </ThemedView>
   );
 }
