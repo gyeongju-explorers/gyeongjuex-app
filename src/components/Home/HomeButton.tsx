@@ -1,6 +1,4 @@
-import { Pressable } from 'react-native';
-
-import { Text } from '@/components/global/text';
+import { Pressable, Text } from 'react-native';
 
 const HomeButton = () => {
   return (
