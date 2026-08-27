@@ -1,8 +1,9 @@
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 
 import backIcon from '@/assets/icons/back.svg';
+import { ThemedText } from '@/components/global/themed-text';
 
 export default function Header() {
   return (
@@ -15,7 +16,7 @@ export default function Header() {
         >
           <Image source={backIcon} style={{ width: 10, height: 18 }} />
         </TouchableOpacity>
-        <Text className="text-lg font-medium text-black">회원가입</Text>
+        <ThemedText className="text-lg text-black">회원가입</ThemedText>
       </View>
       <View style={styles.line} />
       <View style={styles.rect} />

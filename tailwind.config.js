@@ -11,6 +11,14 @@ module.exports = {
   theme: {
     spacing: pxSpacing,
     extend: {
+      // Loaded via `useFonts` in src/app/_layout.tsx (assets/fonts/GmarketSans-*.otf).
+      // Mirrors constants/theme.ts `Fonts`; prefer <ThemedText weight="..."> over these
+      // utilities so text without an explicit font-* class still gets Gmarket Sans.
+      fontFamily: {
+        light: ['GmarketSans-Light'],
+        sans: ['GmarketSans-Medium'],
+        bold: ['GmarketSans-Bold'],
+      },
       // Mirrors constants/theme.ts `Colors` (kept in sync by hand — tailwind.config.js
       // is plain Node/CommonJS and can't import that .ts file directly).
       // Base = light mode; use the `-dark` pair with the `dark:` variant, e.g.

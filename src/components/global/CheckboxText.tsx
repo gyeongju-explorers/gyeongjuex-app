@@ -1,8 +1,9 @@
 import { Image } from 'expo-image';
 import { useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 
 import checkIcon from '@/assets/icons/check.svg';
+import { ThemedText } from '@/components/global/themed-text';
 
 type CheckboxTextProps = {
   text: string;
@@ -23,7 +24,7 @@ const CheckboxText = ({ text, checkedColor = '#29D9CE' }: CheckboxTextProps) => 
       >
         {checked && <Image source={checkIcon} style={{ width: 12, height: 9 }} />}
       </View>
-      <Text className="text-md text-gray-500 dark:text-text-dark">{text}</Text>
+      <ThemedText className="text-md text-gray-500 dark:text-text-dark">{text}</ThemedText>
     </Pressable>
   );
 };

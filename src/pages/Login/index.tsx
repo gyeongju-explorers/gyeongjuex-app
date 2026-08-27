@@ -1,9 +1,10 @@
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import Button from '@/components/global/Button';
 import CheckboxText from '@/components/global/CheckboxText';
 import { Input } from '@/components/global/Input';
+import { ThemedText } from '@/components/global/themed-text';
 import { ThemedView } from '@/components/global/themed-view';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 
@@ -20,15 +21,15 @@ export default function Login() {
           <Button text="로그인" theme="dark" />
           <View className="my-10 flex-row items-center justify-center gap-16">
             <TouchableOpacity>
-              <Text className="text-gray-500">아이디 찾기</Text>
+              <ThemedText className="text-gray-500">아이디 찾기</ThemedText>
             </TouchableOpacity>
             <View className="h-12 w-1 bg-gray-300" />
             <TouchableOpacity>
-              <Text className="text-gray-500">비밀번호 찾기</Text>
+              <ThemedText className="text-gray-500">비밀번호 찾기</ThemedText>
             </TouchableOpacity>
             <View className="h-12 w-1 bg-gray-300" />
             <TouchableOpacity>
-              <Text className="text-gray-500">회원가입</Text>
+              <ThemedText className="text-gray-500">회원가입</ThemedText>
             </TouchableOpacity>
           </View>
         </View>
