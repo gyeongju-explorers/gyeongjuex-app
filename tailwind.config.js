@@ -1,19 +1,28 @@
 /** @type {import('tailwindcss').Config} */
 
 // 1 spacing unit = 1px (e.g. p-4 -> 4px), instead of Tailwind's default 0.25rem step.
+// Capped at 256px — Tailwind CSS IntelliSense re-resolves this scale across every
+// spacing utility (padding/margin/gap/width/height/...) on save, so a 1000-entry
+// scale made every save noticeably slow. For one-off values above 256px, use
+// Tailwind's arbitrary-value syntax instead, e.g. className="pt-[450px]".
 const pxSpacing = Object.fromEntries(
-  Array.from({ length: 1001 }, (_, px) => [String(px), `${px}px`]),
+  Array.from({ length: 257 }, (_, px) => [String(px), `${px}px`]),
 );
 
 module.exports = {
   content: ['./src/**/*.{js,jsx,ts,tsx}'],
   presets: [require('nativewind/preset')],
+  // Gmarket Sans ships as separate Light/Medium/Bold files, not one variable font, so RN
+  // can't synthesize weight from `fontWeight` — Tailwind's built-in font-weight utilities
+  // (font-bold, font-light, ...) would silently do nothing. Disabled so those class names
+  // resolve to our `fontFamily` utilities below instead, which swap the actual font file.
+  corePlugins: { fontWeight: false },
   theme: {
     spacing: pxSpacing,
     extend: {
       // Loaded via `useFonts` in src/app/_layout.tsx (assets/fonts/GmarketSans-*.otf).
-      // Mirrors constants/theme.ts `Fonts`; prefer <ThemedText weight="..."> over these
-      // utilities so text without an explicit font-* class still gets Gmarket Sans.
+      // Mirrors constants/theme.ts `Fonts`; ThemedText defaults to `font-sans` so text
+      // without an explicit font-* class still gets Gmarket Sans.
       fontFamily: {
         light: ['GmarketSans-Light'],
         sans: ['GmarketSans-Medium'],
