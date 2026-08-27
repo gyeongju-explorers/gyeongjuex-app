@@ -13,9 +13,11 @@ export default function SmallButton({ text, onPress, disabled = false }: SmallBu
     <Pressable
       onPress={onPress}
       disabled={disabled}
-      className={`h-44 items-center justify-center rounded-[5px] px-16 ${disabled ? 'bg-gray-300' : 'bg-gray-500'}`}
+      className={`h-44 items-center justify-center rounded-full px-16 ${disabled ? 'bg-gray-300' : 'bg-primary'}`}
     >
-      <ThemedText className="text-sm text-white">{text}</ThemedText>
+      <ThemedText className={`text-[12px] ${disabled ? 'text-white' : 'text-secondary'}`}>
+        {text}
+      </ThemedText>
     </Pressable>
   );
 }

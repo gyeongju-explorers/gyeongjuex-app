@@ -1,17 +1,49 @@
+import { Image } from 'expo-image';
 import { useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import visibleIcon from '@/assets/icons/visible-active.svg';
 import Button from '@/components/global/Button';
 import { Input } from '@/components/global/Input';
 import { ThemedText } from '@/components/global/themed-text';
 import { ThemedView } from '@/components/global/themed-view';
 import Header from '@/components/SignUp/Header';
-import SmallButton from '@/components/SignUp/SmallButton';
+import SmallButton from '@/components/global/SmallButton';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
 
 function Label({ children }: { children: string }) {
   return <ThemedText className="text-sm leading-[16px] text-black">{children}</ThemedText>;
+}
+
+function PasswordInput({
+  placeholder,
+  value,
+  onChangeText,
+}: {
+  placeholder: string;
+  value: string;
+  onChangeText: (text: string) => void;
+}) {
+  const [visible, setVisible] = useState(false);
+
+  return (
+    <View className="relative justify-center">
+      <Input
+        placeholder={placeholder}
+        secureTextEntry={!visible}
+        value={value}
+        onChangeText={onChangeText}
+      />
+      <TouchableOpacity
+        className="absolute bottom-0 right-[22px] top-0 items-center justify-center"
+        hitSlop={8}
+        onPress={() => setVisible((prev) => !prev)}
+      >
+        <Image source={visibleIcon} style={{ width: 19, height: 13 }} />
+      </TouchableOpacity>
+    </View>
+  );
 }
 
 export default function SignUp() {
@@ -42,7 +74,7 @@ export default function SignUp() {
                   value={id}
                   onChangeText={setId}
                 />
-                <SmallButton text="중복확인" />
+                <SmallButton text="중복확인" disabled={id.trim().length === 0} />
               </View>
             </View>
 
@@ -53,15 +85,9 @@ export default function SignUp() {
 
             <View className="gap-8">
               <Label>비밀번호</Label>
-              <Input
-                placeholder="비밀번호"
-                secureTextEntry
-                value={password}
-                onChangeText={setPassword}
-              />
-              <Input
+              <PasswordInput placeholder="비밀번호" value={password} onChangeText={setPassword} />
+              <PasswordInput
                 placeholder="비밀번호 확인"
-                secureTextEntry
                 value={passwordConfirm}
                 onChangeText={setPasswordConfirm}
               />
@@ -82,7 +108,7 @@ export default function SignUp() {
                   value={phone}
                   onChangeText={setPhone}
                 />
-                <SmallButton text="인증번호 받기" />
+                <SmallButton text="인증번호 받기" disabled={phone.trim().length === 0} />
               </View>
             </View>
           </ScrollView>
@@ -114,7 +140,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.four,
   },
   submitButton: {
-    height: 79,
-    boxShadow: '0 4px 14.6px 0 rgba(0, 0, 0, 0.10)',
+    height: 79
   },
 });
