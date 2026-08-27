@@ -19,6 +19,14 @@ module.exports = {
   corePlugins: { fontWeight: false },
   theme: {
     spacing: pxSpacing,
+    // Not under `extend` — replaces nativewind's preset shadow scale (which has a
+    // different offset/blur/color per size) so every `shadow*` class in the app
+    // renders identically: offset-y 4px, black at 25% opacity. Add className="shadow"
+    // wherever a shadow is needed; don't reach for inline `boxShadow` styles.
+    boxShadow: {
+      DEFAULT: '0px 4px 4px rgba(0, 0, 0, 0.25)',
+      none: '0 0 #0000',
+    },
     extend: {
       // Loaded via `useFonts` in src/app/_layout.tsx (assets/fonts/GmarketSans-*.otf).
       // Mirrors constants/theme.ts `Fonts`; ThemedText defaults to `font-sans` so text
