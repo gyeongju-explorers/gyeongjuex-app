@@ -22,30 +22,12 @@ export const Colors = {
   },
 } as const;
 
-export const Fonts = Platform.select({
-  ios: {
-    /** iOS `UIFontDescriptorSystemDesignDefault` */
-    sans: 'system-ui',
-    /** iOS `UIFontDescriptorSystemDesignSerif` */
-    serif: 'ui-serif',
-    /** iOS `UIFontDescriptorSystemDesignRounded` */
-    rounded: 'ui-rounded',
-    /** iOS `UIFontDescriptorSystemDesignMonospaced` */
-    mono: 'ui-monospace',
-  },
-  default: {
-    sans: 'normal',
-    serif: 'serif',
-    rounded: 'normal',
-    mono: 'monospace',
-  },
-  web: {
-    sans: 'var(--font-display)',
-    serif: 'var(--font-serif)',
-    rounded: 'var(--font-rounded)',
-    mono: 'var(--font-mono)',
-  },
-});
+// Registered names from the `useFonts` call in `src/app/_layout.tsx` (assets/fonts/GmarketSans-*.otf).
+export const Fonts = {
+  light: 'GmarketSans-Light',
+  medium: 'GmarketSans-Medium',
+  bold: 'GmarketSans-Bold',
+} as const;
 
 export const Spacing = {
   half: 2,

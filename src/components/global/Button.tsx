@@ -1,4 +1,6 @@
-import { Pressable, type StyleProp, Text, type ViewStyle } from 'react-native';
+import { Pressable, type StyleProp, type ViewStyle } from 'react-native';
+
+import { ThemedText } from '@/components/global/themed-text';
 
 type ButtonProps = {
   text: string;
@@ -26,11 +28,11 @@ const Button = ({
       className={`h-56 w-full items-center justify-center ${rounded ? 'rounded-xl' : 'rounded-none'} ${disabled ? 'bg-gray-300' : isDark ? 'bg-primary-900' : 'bg-primary-500'}`}
       style={style}
     >
-      <Text
+      <ThemedText
         className={`text-center text-base ${disabled ? 'text-white' : isDark ? 'text-white' : 'text-black'}`}
       >
         {text}
-      </Text>
+      </ThemedText>
     </Pressable>
   );
 };

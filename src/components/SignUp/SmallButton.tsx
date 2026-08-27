@@ -1,4 +1,6 @@
-import { Pressable, Text } from 'react-native';
+import { Pressable } from 'react-native';
+
+import { ThemedText } from '@/components/global/themed-text';
 
 type SmallButtonProps = {
   text: string;
@@ -13,7 +15,7 @@ export default function SmallButton({ text, onPress, disabled = false }: SmallBu
       disabled={disabled}
       className={`h-44 items-center justify-center rounded-[5px] px-16 ${disabled ? 'bg-gray-300' : 'bg-gray-500'}`}
     >
-      <Text className="text-sm text-white">{text}</Text>
+      <ThemedText className="text-sm text-white">{text}</ThemedText>
     </Pressable>
   );
 }

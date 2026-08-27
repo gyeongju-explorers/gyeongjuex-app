@@ -1,16 +1,17 @@
 import { useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import Button from '@/components/global/Button';
 import { Input } from '@/components/global/Input';
+import { ThemedText } from '@/components/global/themed-text';
 import { ThemedView } from '@/components/global/themed-view';
 import Header from '@/components/SignUp/Header';
 import SmallButton from '@/components/SignUp/SmallButton';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
 
 function Label({ children }: { children: string }) {
-  return <Text className="text-sm font-medium leading-[16px] text-black">{children}</Text>;
+  return <ThemedText className="text-sm leading-[16px] text-black">{children}</ThemedText>;
 }
 
 export default function SignUp() {
