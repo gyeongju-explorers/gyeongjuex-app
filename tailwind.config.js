@@ -16,37 +16,32 @@ module.exports = {
       // Base = light mode; use the `-dark` pair with the `dark:` variant, e.g.
       // className="bg-background-element dark:bg-background-element-dark".
       colors: {
-        text: '#000000',
-        'text-dark': '#ffffff',
-        'text-secondary': '#60646C',
-        'text-secondary-dark': '#B0B4BA',
-        background: '#ffffff',
-        'background-dark': '#000000',
-        'background-element': '#F0F0F3',
-        'background-element-dark': '#212225',
-        'background-selected': '#E0E1E6',
-        'background-selected-dark': '#2E3135',
+        // text: '#000000',
+        // 'text-dark': '#ffffff',
+        // 'text-secondary': '#60646C',
+        // 'text-secondary-dark': '#B0B4BA',
+        // background: '#ffffff',
+        // 'background-dark': '#000000',
+        // 'background-element': '#F0F0F3',
+        // 'background-element-dark': '#212225',
+        // 'background-selected': '#E0E1E6',
+        // 'background-selected-dark': '#2E3135',
 
         // TODO: placeholder hex — swap these for the real design values.
         // `gray` merges into Tailwind's default gray scale (only 50/100/300 are
         // overridden, gray-200/400/500/... stay Tailwind defaults until you add them).
         // `primary` is a brand-new scale, add more steps (400, 500, 700, ...) as needed.
-        black: '#222222',
-        white: '#ffffff',
+        black: '#111111',
+        white: '#FAFAFA',
         gray: {
-          50: '#FAFAFA',
-          100: '#F4F4F4',
-          300: '#B5B5B5',
-          500: '#A1A1A1',
-          700: '#808080',
-          900: '#434344',
+          100: '#F6F6F6',
+          300: '#D1D1D1',
+          500: '#ADADAD',
+          700: '#919191',
+          900: '#3D3D3D',
         },
-        primary: {
-          100: '#DCEAFE',
-          300: '#93C5FD',
-          500: '#29D9CE',
-          900: '#26323E',
-        },
+        primary: '#29D9CE',
+        secondary: '#26323E',
       },
     },
   },
