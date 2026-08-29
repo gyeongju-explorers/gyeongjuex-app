@@ -8,7 +8,7 @@ type MissionChipProps = {
 const MissionChip = ({ text }: MissionChipProps) => {
   return (
     <Pressable className="self-start bg-black/50 rounded-full px-16 py-10">
-      <ThemedText className="text-white">{text}</ThemedText>
+      <ThemedText className="text-white text-xs">{text}</ThemedText>
     </Pressable>
   );
 };

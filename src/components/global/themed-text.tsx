@@ -16,5 +16,5 @@ export type ThemedTextProps = TextProps & {
 };
 
 export function ThemedText({ weight = 'medium', className, ...props }: ThemedTextProps) {
-  return <Text className={twMerge(WEIGHT_CLASS_NAME[weight], className)} {...props} />;
+  return <Text className={twMerge(WEIGHT_CLASS_NAME[weight], 'leading-none', className)} {...props} />;
 }
