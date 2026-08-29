@@ -20,7 +20,7 @@ export default function MissionMap() {
         </View>
         <PhotoMarker photos={[image1]} />
         <PhotoMarker photos={[image1, image1]} />
-        <MissionSlide photos={[image1, image2, image1, image2]} />
+        <MissionSlide photos={[image1, image2, image1, image2, image1, image2, image1, image2]} />
       </SafeAreaView>
     </ThemedView>
   );

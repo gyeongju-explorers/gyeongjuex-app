@@ -11,7 +11,7 @@ const Marker = ({ active = false }: MarkerProps) => {
   return (
     <Image
       source={active ? markerActiveIcon : markerInactiveIcon}
-      style={active ? { width: 29, height: 29 } : { width: 22, height: 22 }}
+      style={active ? { width: 30, height: 30 } : { width: 25, height: 25 }}
     />
   );
 };
