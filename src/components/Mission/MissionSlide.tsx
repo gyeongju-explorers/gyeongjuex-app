@@ -35,6 +35,7 @@ type PhotoSource = ImageSource | number;
 
 type MissionSlideProps = {
   photos: PhotoSource[];
+  onOpenListModal: () => void;
 };
 
 type ArcCardProps = {
@@ -87,7 +88,7 @@ const ArcCard = ({ source, index, scrollX }: ArcCardProps) => {
   );
 };
 
-const MissionSlide = ({ photos }: MissionSlideProps) => {
+const MissionSlide = ({ photos, onOpenListModal }: MissionSlideProps) => {
   const scrollX = useSharedValue(0);
   const scrollRef = useRef<Animated.ScrollView>(null);
 
@@ -107,7 +108,7 @@ const MissionSlide = ({ photos }: MissionSlideProps) => {
   const contentWidth = (photos.length - 1) * ITEM_SPACING + SCREEN_WIDTH;
 
   return (
-    <View className="absolute inset-x-0 bottom-0" style={{ height: CARD_HEIGHT + 120 }}>
+    <View className="absolute inset-x-0 bottom-0 overflow-hidden" style={{ height: CARD_HEIGHT + 120 }}>
       <LinearGradient
         colors={['rgba(255,255,255,0)', '#ffffff']}
         style={StyleSheet.absoluteFill}
@@ -138,7 +139,7 @@ const MissionSlide = ({ photos }: MissionSlideProps) => {
         <View className="items-center">
           <MissionButton text="PICK !" />
           <View className="absolute left-full ml-20">
-            <MissionListButton />
+            <MissionListButton onPress={onOpenListModal} />
           </View>
         </View>
       </View>
