@@ -28,14 +28,11 @@ const Button = ({
     <Pressable
       onPress={onPress}
       disabled={disabled}
-      className={twMerge(
-        `h-56 w-full items-center justify-center ${rounded ? 'rounded-xl' : 'rounded-none'} ${disabled ? 'bg-gray-300' : isDark ? 'bg-primary-900' : 'bg-primary-500'}`,
-        className,
-      )}
+      className={`h-56 w-full items-center justify-center ${rounded ? 'rounded-full' : 'rounded-none'} ${disabled ? 'bg-gray-300' : isDark ? 'bg-secondary' : 'bg-primary'}`}
       style={style}
     >
       <ThemedText
-        className={`text-center text-base ${disabled ? 'text-white' : isDark ? 'text-white' : 'text-black'}`}
+        className={`text-center text-base ${disabled ? 'text-white' : isDark ? 'text-white' : 'text-secondary'}`}
       >
         {text}
       </ThemedText>

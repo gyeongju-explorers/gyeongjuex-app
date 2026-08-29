@@ -12,7 +12,7 @@ export default function Header() {
         <TouchableOpacity
           className="absolute left-[26px]"
           hitSlop={8}
-          onPress={() => router.back()}
+          onPress={() => router.replace('/login')}
         >
           <Image source={backIcon} style={{ width: 10, height: 18 }} />
         </TouchableOpacity>

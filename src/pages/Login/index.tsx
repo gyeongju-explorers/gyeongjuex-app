@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -28,7 +29,7 @@ export default function Login() {
               <ThemedText className="text-gray-500">비밀번호 찾기</ThemedText>
             </TouchableOpacity>
             <View className="h-12 w-1 bg-gray-300" />
-            <TouchableOpacity>
+            <TouchableOpacity onPress={() => router.push('/signup')}>
               <ThemedText className="text-gray-500">회원가입</ThemedText>
             </TouchableOpacity>
           </View>
