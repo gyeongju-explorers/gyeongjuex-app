@@ -1,11 +1,13 @@
 import { Pressable, type StyleProp, type ViewStyle } from 'react-native';
 
 import { ThemedText } from '@/components/global/themed-text';
+import { twMerge } from '@/lib/tw-merge';
 
 type ButtonProps = {
   text: string;
   theme?: 'dark' | 'default';
   rounded?: boolean;
+  className?: string;
   style?: StyleProp<ViewStyle>;
   disabled?: boolean;
   onPress?: () => void;
@@ -15,6 +17,7 @@ const Button = ({
   text,
   theme = 'default',
   rounded = true,
+  className,
   style,
   disabled = false,
   onPress,

@@ -1,9 +1,8 @@
 import { TextInput, type TextInputProps } from 'react-native';
-import { twMerge } from 'tailwind-merge';
 
-import { Fonts } from '@/constants/theme';
+import { twMerge } from '@/lib/tw-merge';
 
-export function Input({ className, placeholder, style, ...props }: TextInputProps) {
+export function Input({ className, placeholder, ...props }: TextInputProps) {
   return (
     <TextInput
       placeholder={placeholder}

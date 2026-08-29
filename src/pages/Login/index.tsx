@@ -13,7 +13,7 @@ export default function Login() {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <View className="gap-16 pt-450">
+        <View className="gap-16 pt-[450px]">
           <View className="gap-8">
             <Input placeholder="아이디" />
             <Input placeholder="비밀번호" />
