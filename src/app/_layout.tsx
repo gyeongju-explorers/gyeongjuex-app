@@ -33,7 +33,6 @@ export default function RootLayout() {
         <Stack.Screen name="login" />
         <Stack.Screen name="signup" />
         <Stack.Screen name="mission" />
-        <Stack.Screen name="record" />
       </Stack>
     </ThemeProvider>
   );
