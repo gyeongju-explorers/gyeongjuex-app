@@ -3,8 +3,10 @@ import { useState } from 'react';
 import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import visibleIcon from '@/assets/icons/visible-active.svg';
+import visibleActiveIcon from '@/assets/icons/visible-active.svg';
+import visibleInactiveIcon from '@/assets/icons/visible-inactive.svg';
 import Button from '@/components/global/Button';
+import HelperText from '@/components/global/HelperText';
 import { Input } from '@/components/global/Input';
 import { ThemedText } from '@/components/global/themed-text';
 import { ThemedView } from '@/components/global/themed-view';
@@ -14,6 +16,11 @@ import { MaxContentWidth, Spacing } from '@/constants/theme';
 
 function Label({ children }: { children: string }) {
   return <ThemedText className="text-sm leading-[16px] text-black">{children}</ThemedText>;
+}
+
+// TODO: 실제 아이디 중복확인 API로 교체.
+function checkIdDuplicateMock(value: string) {
+  return value.trim().toLowerCase() === 'test';
 }
 
 function PasswordInput({
@@ -40,7 +47,11 @@ function PasswordInput({
         hitSlop={8}
         onPress={() => setVisible((prev) => !prev)}
       >
-        <Image source={visibleIcon} style={{ width: 19, height: 13 }} />
+        {visible ? (
+          <Image source={visibleActiveIcon} style={{ width: 19, height: 13 }} />
+        ) : (
+          <Image source={visibleInactiveIcon} style={{ width: 20, height: 9 }} />
+        )}
       </TouchableOpacity>
     </View>
   );
@@ -48,15 +59,26 @@ function PasswordInput({
 
 export default function SignUp() {
   const [id, setId] = useState('');
+  const [idCheckStatus, setIdCheckStatus] = useState<'idle' | 'available' | 'duplicate'>('idle');
   const [nickname, setNickname] = useState('');
   const [password, setPassword] = useState('');
   const [passwordConfirm, setPasswordConfirm] = useState('');
   const [name, setName] = useState('');
-  const [phone, setPhone] = useState('');
 
-  const isComplete = [id, nickname, password, passwordConfirm, name, phone].every(
+  const isComplete = [id, nickname, password, passwordConfirm, name].every(
     (value) => value.trim().length > 0,
   );
+
+  const passwordMismatch = passwordConfirm.length > 0 && password !== passwordConfirm;
+
+  const handleIdChange = (text: string) => {
+    setId(text);
+    setIdCheckStatus('idle');
+  };
+
+  const handleIdCheck = () => {
+    setIdCheckStatus(checkIdDuplicateMock(id) ? 'duplicate' : 'available');
+  };
 
   return (
     <ThemedView style={styles.container}>
@@ -72,10 +94,20 @@ export default function SignUp() {
                   className="flex-1"
                   placeholder="아이디를 입력하세요"
                   value={id}
-                  onChangeText={setId}
+                  onChangeText={handleIdChange}
                 />
-                <SmallButton text="중복확인" disabled={id.trim().length === 0} />
+                <SmallButton
+                  text="중복확인"
+                  disabled={id.trim().length === 0}
+                  onPress={handleIdCheck}
+                />
               </View>
+              {idCheckStatus === 'available' && (
+                <HelperText>사용 가능한 아이디입니다.</HelperText>
+              )}
+              {idCheckStatus === 'duplicate' && (
+                <HelperText>이미 사용 중인 아이디입니다.</HelperText>
+              )}
             </View>
 
             <View className="gap-8">
@@ -91,25 +123,12 @@ export default function SignUp() {
                 value={passwordConfirm}
                 onChangeText={setPasswordConfirm}
               />
+              {passwordMismatch && <HelperText>비밀번호가 일치하지 않습니다.</HelperText>}
             </View>
 
             <View className="gap-8">
               <Label>이름</Label>
               <Input placeholder="이름을 입력하세요" value={name} onChangeText={setName} />
-            </View>
-
-            <View className="gap-8">
-              <Label>휴대폰 인증</Label>
-              <View className="flex-row gap-8">
-                <Input
-                  className="flex-1"
-                  placeholder="휴대폰 번호"
-                  keyboardType="phone-pad"
-                  value={phone}
-                  onChangeText={setPhone}
-                />
-                <SmallButton text="인증번호 받기" disabled={phone.trim().length === 0} />
-              </View>
             </View>
           </ScrollView>
         </View>
