@@ -3,6 +3,7 @@ import cors from 'cors';
 import express from 'express';
 
 import placesRouter from './routes/places.js';
+import usersRouter from './routes/users.js';
 
 const app = express();
 
@@ -14,6 +15,7 @@ app.get('/health', (_req, res) => {
 });
 
 app.use('/api', placesRouter);
+app.use('/user', usersRouter);
 
 const port = Number(process.env.PORT ?? 8080);
 app.listen(port, () => {
