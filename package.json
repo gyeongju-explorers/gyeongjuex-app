@@ -48,7 +48,8 @@
     "web": "expo start --web",
     "lint": "expo lint",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "tour-photos": "node --env-file=.env scripts/tour-photos/fetch-photos.js"
   },
   "private": true
 }
