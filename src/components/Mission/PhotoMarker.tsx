@@ -53,8 +53,8 @@ const PhotoMarker = ({ photos, active = true }: PhotoMarkerProps) => {
           style={[photoStyle, backPhoto ? { transform: [{ rotate: '-8deg' }] } : null]}
         />
       </View>
-      <View style={{ marginTop: -14 }}>
-        <Marker active={active} />
+      <View style={{ marginTop: -14, zIndex: 1, elevation: 5 }}>
+        <Marker variant={active ? 'active' : 'inactive'} />
       </View>
     </View>
   );

@@ -10,6 +10,8 @@ interface PlaceRow extends RowDataPacket {
   location: string;
   image_url: string | null;
   category: string | null;
+  latitude: number | null;
+  longitude: number | null;
   distance_km: number | null;
 }
 
@@ -50,7 +52,7 @@ router.get('/places', requireAuth, async (req: AuthedRequest, res) => {
   try {
     const [rows] = hasLocation
       ? await pool.query<PlaceWithCompletionRow[]>(
-          `SELECT p.id, p.name, p.location, p.image_url, p.category,
+          `SELECT p.id, p.name, p.location, p.image_url, p.category, p.latitude, p.longitude,
                   ${DISTANCE_KM_EXPR} AS distance_km,
                   (mc.id IS NOT NULL) AS is_completed
            FROM place p
@@ -59,7 +61,8 @@ router.get('/places', requireAuth, async (req: AuthedRequest, res) => {
           [lat, lng, lat, req.userId]
         )
       : await pool.query<PlaceWithCompletionRow[]>(
-          `SELECT p.id, p.name, p.location, p.image_url, p.category, NULL AS distance_km,
+          `SELECT p.id, p.name, p.location, p.image_url, p.category, p.latitude, p.longitude,
+                  NULL AS distance_km,
                   (mc.id IS NOT NULL) AS is_completed
            FROM place p
            LEFT JOIN mission_completion mc ON mc.place_id = p.id AND mc.user_id = ?
@@ -73,6 +76,8 @@ router.get('/places', requireAuth, async (req: AuthedRequest, res) => {
       address: row.location,
       image: row.image_url,
       category: row.category,
+      latitude: row.latitude,
+      longitude: row.longitude,
       distance: row.distance_km !== null ? Math.round(row.distance_km * 10) / 10 : null,
       isCompleted: Boolean(row.is_completed),
     }));

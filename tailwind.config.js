@@ -24,7 +24,7 @@ module.exports = {
     // renders identically: offset-y 4px, black at 25% opacity. Add className="shadow"
     // wherever a shadow is needed; don't reach for inline `boxShadow` styles.
     boxShadow: {
-      DEFAULT: '0px 4px 4px rgba(0, 0, 0, 0.25)',
+      DEFAULT: '0px 2px 20px rgba(0, 0, 0, 0.3)',
       none: '0 0 #0000',
     },
     extend: {

@@ -1,19 +1,24 @@
-import { Image } from 'expo-image';
+import { Image, type ImageSource } from 'expo-image';
 
 import markerActiveIcon from '@/assets/icons/marker-active.svg';
 import markerInactiveIcon from '@/assets/icons/marker-inactive.svg';
+import markerSelectedIcon from '@/assets/icons/marker-selected.svg';
 
-type MarkerProps = {
-  active?: boolean;
+export type MarkerVariant = 'inactive' | 'active' | 'selected';
+
+const MARKER_ICONS: Record<MarkerVariant, { source: ImageSource | number; size: number }> = {
+  inactive: { source: markerInactiveIcon, size: 25 },
+  active: { source: markerActiveIcon, size: 30 },
+  selected: { source: markerSelectedIcon, size: 30 },
 };
 
-const Marker = ({ active = false }: MarkerProps) => {
-  return (
-    <Image
-      source={active ? markerActiveIcon : markerInactiveIcon}
-      style={active ? { width: 30, height: 30 } : { width: 25, height: 25 }}
-    />
-  );
+type MarkerProps = {
+  variant?: MarkerVariant;
+};
+
+const Marker = ({ variant = 'inactive' }: MarkerProps) => {
+  const { source, size } = MARKER_ICONS[variant];
+  return <Image source={source} style={{ width: size, height: size }} />;
 };
 
 export default Marker;
