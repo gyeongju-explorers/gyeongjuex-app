@@ -8,7 +8,7 @@ const NAV_ITEMS: { label: string; onPress?: () => void }[] = [
   { label: 'HOME', onPress: () => router.replace('/') },
   { label: '배지' },
   { label: '기록', onPress: () => router.replace('/record') },
-  { label: 'MY' },
+  { label: 'MY', onPress: () => router.replace('/my') },
 ];
 
 export default function Nav() {
