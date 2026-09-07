@@ -4,8 +4,8 @@ import { View } from 'react-native';
 import { ThemedText } from '@/components/global/themed-text';
 
 type PhotoPostProps = {
-  location: string;
-  date: string;
+  location?: string;
+  date?: string;
   photos: string[];
 };
 
@@ -17,12 +17,18 @@ export default function PhotoPost({ location, date, photos }: PhotoPostProps) {
 
   return (
     <View className="gap-16">
-      <View className="flex-row items-center justify-between">
-        <ThemedText weight="bold" className="text-base text-black">
-          {location}
-        </ThemedText>
-        <ThemedText className="text-[12px] text-gray-500">{date}</ThemedText>
-      </View>
+      {(location || date) && (
+        <View className="flex-row items-center justify-between">
+          {location ? (
+            <ThemedText weight="bold" className="text-base text-black">
+              {location}
+            </ThemedText>
+          ) : (
+            <View />
+          )}
+          {date && <ThemedText className="text-[12px] text-gray-500">{date}</ThemedText>}
+        </View>
+      )}
 
       <View className="flex-row">
         {visiblePhotos.map((uri, index) => {
