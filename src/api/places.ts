@@ -1,11 +1,13 @@
 import { apiClient } from '@/api/client';
 
+export type PlaceCategory = 'HISTORY_CULTURE' | 'WORLD_HERITAGE' | 'NATURE_HEALING';
+
 export type Place = {
   id: number;
   name: string;
   address: string;
   image: string | null;
-  category: string | null;
+  category: PlaceCategory | null;
   latitude: number | null;
   longitude: number | null;
   distance: number | null;

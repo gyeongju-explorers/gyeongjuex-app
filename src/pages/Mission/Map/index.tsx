@@ -40,7 +40,9 @@ const GYEONGJU_CENTER = { latitude: 35.8354, longitude: 129.2194 };
 
 export default function MissionMap() {
   const {
-    places,
+    filteredPlaces,
+    selectedCategory,
+    setSelectedCategory,
     selectedPlaceId,
     setSelectedPlaceId,
     selectedPlace,
@@ -82,7 +84,7 @@ export default function MissionMap() {
         style={StyleSheet.absoluteFill}
         initialCamera={{ ...GYEONGJU_CENTER, zoom: 14 }}
       >
-        {places
+        {filteredPlaces
           .filter((place) => place.latitude !== null && place.longitude !== null)
           .map((place) =>
             place.isCompleted ? (
@@ -124,7 +126,10 @@ export default function MissionMap() {
       </NaverMapView>
       <SafeAreaView style={styles.safeArea} pointerEvents="box-none">
         <View pointerEvents="box-none">
-          <MissionChipList />
+          <MissionChipList
+            selectedCategory={selectedCategory}
+            onSelectCategory={setSelectedCategory}
+          />
         </View>
         <MissionSlide
           photos={[image1, image2, image1, image2, image1, image2, image1, image2]}

@@ -50,7 +50,9 @@ function normalizeCoordinates(places: Place[]) {
 
 export default function MissionMap() {
   const {
-    places,
+    filteredPlaces,
+    selectedCategory,
+    setSelectedCategory,
     selectedPlaceId,
     setSelectedPlaceId,
     selectedPlace,
@@ -60,7 +62,7 @@ export default function MissionMap() {
     setIsListModalOpen,
   } = useMissionMapData();
 
-  const markers = useMemo(() => normalizeCoordinates(places), [places]);
+  const markers = useMemo(() => normalizeCoordinates(filteredPlaces), [filteredPlaces]);
 
   return (
     <ThemedView style={styles.container}>
@@ -85,7 +87,10 @@ export default function MissionMap() {
       </View>
       <SafeAreaView style={styles.safeArea} pointerEvents="box-none">
         <View pointerEvents="box-none">
-          <MissionChipList />
+          <MissionChipList
+            selectedCategory={selectedCategory}
+            onSelectCategory={setSelectedCategory}
+          />
         </View>
         <ThemedText className="text-gray-400 text-xs px-4">
           웹 미리보기: 지도 타일 없이 마커 위치만 대략 재현했어요.
