@@ -1,8 +1,8 @@
 CREATE TABLE IF NOT EXISTS place (
   id INT AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(255) NOT NULL,
-  location VARCHAR(255) NOT NULL,
-  image_url VARCHAR(500),
+  address VARCHAR(255) NOT NULL,
+  image VARCHAR(500),
   category VARCHAR(100),
   latitude DECIMAL(10, 7),
   longitude DECIMAL(10, 7),

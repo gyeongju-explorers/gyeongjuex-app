@@ -1,0 +1,132 @@
+[
+  {
+    "name": "대릉원",
+    "address": "경북 경주시 황남동 31-1",
+    "image": "https://tong.visitkorea.or.kr/cms2/website/00/2909300.jpg",
+    "geocode": {
+      "latitude": 35.8382883,
+      "longitude": 129.2131927,
+      "matchedAddress": "경상북도 경주시 황남동 31-1"
+    }
+  },
+  {
+    "name": "천마총",
+    "address": "경북 경주시 황남동 262",
+    "image": "https://tong.visitkorea.or.kr/cms2/website/08/2949808.jpg",
+    "geocode": {
+      "latitude": 35.8385918,
+      "longitude": 129.2105397,
+      "matchedAddress": "경상북도 경주시 황남동 262"
+    }
+  },
+  {
+    "name": "첨성대",
+    "address": "경북 경주시 인왕동 839-1",
+    "image": "https://tong.visitkorea.or.kr/cms2/website/89/3501989.jpg",
+    "geocode": {
+      "latitude": 35.8346954,
+      "longitude": 129.2190639,
+      "matchedAddress": "경상북도 경주시 인왕동 839-1"
+    }
+  },
+  {
+    "name": "동궁과 월지",
+    "address": "경북 경주시 원화로 102 안압지",
+    "image": "https://tong.visitkorea.or.kr/cms2/website/89/3020489.JPG",
+    "geocode": {
+      "latitude": 35.8347938,
+      "longitude": 129.2265702,
+      "matchedAddress": "경상북도 경주시 원화로 102"
+    }
+  },
+  {
+    "name": "국립경주박물관",
+    "address": "경북 경주시 일정로 186 국립경주박물관",
+    "image": "https://tong.visitkorea.or.kr/cms2/website/99/978299.jpg",
+    "geocode": {
+      "latitude": 35.8294254,
+      "longitude": 129.2278958,
+      "matchedAddress": "경상북도 경주시 일정로 186 국립경주박물관"
+    }
+  },
+  {
+    "name": "계림",
+    "address": "경북 경주시 교동 14",
+    "image": "https://tong.visitkorea.or.kr/cms2/website/83/2989183.jpg",
+    "geocode": {
+      "latitude": 35.832314,
+      "longitude": 129.2169647,
+      "matchedAddress": "경상북도 경주시 교동 14"
+    }
+  },
+  {
+    "name": "분황사",
+    "address": "경북 경주시 분황로 94-11 분황사",
+    "image": "https://tong.visitkorea.or.kr/cms2/website/07/3035807.jpg",
+    "geocode": {
+      "latitude": 35.8410597,
+      "longitude": 129.2339178,
+      "matchedAddress": "경상북도 경주시 분황로 94-11 분황사"
+    }
+  },
+  {
+    "name": "불국사",
+    "address": "경북 경주시 불국로 385 불국사",
+    "image": "https://tong.visitkorea.or.kr/cms2/website/85/3097785.jpg",
+    "geocode": {
+      "latitude": 35.7903819,
+      "longitude": 129.3318695,
+      "matchedAddress": "경상북도 경주시 불국로 385 불국사"
+    }
+  },
+  {
+    "name": "양동마을",
+    "address": "경북 경주시 강동면 양동리 125",
+    "image": "https://tong.visitkorea.or.kr/cms2/website/73/3501773.jpg",
+    "geocode": {
+      "latitude": 36.0015453,
+      "longitude": 129.2531883,
+      "matchedAddress": "경상북도 경주시 강동면 양동리 125"
+    }
+  },
+  {
+    "name": "옥산서원",
+    "address": "경상북도 경주시 안강읍 옥산서원길 216-27",
+    "image": "https://tong.visitkorea.or.kr/cms2/website/24/1087024.jpg",
+    "geocode": {
+      "latitude": 36.0115142,
+      "longitude": 129.1633444,
+      "matchedAddress": "경상북도 경주시 안강읍 옥산서원길 216-27"
+    }
+  },
+  {
+    "name": "보문관광단지",
+    "address": "경북 경주시 보문로 484-7",
+    "image": "https://tong.visitkorea.or.kr/cms2/website/37/3414637.jpg",
+    "geocode": {
+      "latitude": 35.8399949,
+      "longitude": 129.2856989,
+      "matchedAddress": "경상북도 경주시 보문로 484-7 경주힐튼호텔/우양미술관"
+    }
+  },
+  {
+    "name": "양남 주상절리 파도소리길",
+    "address": "경북 경주시 양남면 동해안로 498-13",
+    "image": "https://tong.visitkorea.or.kr/cms2/website/92/2595992.jpg",
+    "geocode": {
+      "latitude": 35.6860369,
+      "longitude": 129.4741654,
+      "matchedAddress": "경상북도 경주시 양남면 동해안로 498-13"
+    }
+  },
+  {
+    "name": "경주 남산",
+    "address": "경북 경주시 남산동 산36-1",
+    "image": "https://tong.visitkorea.or.kr/cms2/website/49/623349.jpg",
+    "geocode": {
+      "latitude": 35.7958722,
+      "longitude": 129.2323865,
+      "matchedAddress": "경상북도 경주시 남산동 산36-1"
+    }
+  }
+]

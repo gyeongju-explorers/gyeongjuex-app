@@ -8,7 +8,7 @@
  * 실행: node scripts/tour-photos/generate-seed-sql.js
  *
  * place 테이블 스키마 가정 (다르면 아래 컬럼명만 맞춰서 고치면 됨):
- *   place(name, location, image_url)
+ *   place(name, address, image)
  */
 
 const fs = require('fs');
@@ -27,7 +27,7 @@ function main() {
 
   const lines = [
     '-- scripts/tour-photos/fetch-photos.js 결과를 기반으로 자동 생성됨. 수정 후 직접 실행하지 말고 재생성할 것.',
-    'INSERT INTO place (name, location, image_url)',
+    'INSERT INTO place (name, address, image)',
     'VALUES',
   ];
 
