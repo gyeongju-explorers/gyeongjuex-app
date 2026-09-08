@@ -1,1 +1,1 @@
-export { default } from '@/pages/Mission/Map';
+export { default } from '../../pages/Mission/Map';
