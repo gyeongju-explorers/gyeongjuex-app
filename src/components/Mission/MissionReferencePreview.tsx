@@ -17,7 +17,10 @@ const MissionReferencePreview = ({ photo, onClose }: MissionReferencePreviewProp
       onPress={onClose}
       className="items-center justify-center bg-black/50"
     >
-      <Image source={photo} className="w-240 h-240 rounded-3xl border-4 border-white" />
+      <Image
+        source={photo}
+        className="w-[375px] h-[510px] rounded-[70px] border-[15px] border-white"
+      />
     </Pressable>
   );
 };

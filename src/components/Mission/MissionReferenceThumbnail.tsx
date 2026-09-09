@@ -13,7 +13,10 @@ type MissionReferenceThumbnailProps = {
 const MissionReferenceThumbnail = ({ photo, onPress }: MissionReferenceThumbnailProps) => {
   return (
     <Pressable onPress={onPress} hitSlop={8}>
-      <Image source={photo} className="w-64 h-64 rounded-2xl border-2 border-white shadow" />
+      <Image
+        source={photo}
+        className="w-125 h-170 rounded-[30px] border-[6px] border-white shadow"
+      />
     </Pressable>
   );
 };
