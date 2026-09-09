@@ -54,6 +54,12 @@
         {
           "locationWhenInUsePermission": "지도에서 내 위치를 표시하기 위해 위치 정보가 필요합니다."
         }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "미션 사진을 촬영하기 위해 카메라 접근 권한이 필요합니다."
+        }
       ]
     ],
     "experiments": {
