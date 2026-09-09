@@ -13,10 +13,7 @@ const photoStyle = {
   borderRadius: 20,
   borderWidth: 4,
   borderColor: '#ffffff',
-  shadowColor: '#000000',
-  shadowOffset: { width: 0, height: 4 },
-  shadowOpacity: 0.15,
-  shadowRadius: 4,
+  boxShadow: '0px 4px 4px rgba(0, 0, 0, 0.15)',
   elevation: 4,
 };
 
