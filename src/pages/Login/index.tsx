@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { login } from '@/api/auth';
+import { setAccessToken } from '@/api/session';
 import titleImage from '@/assets/images/title.svg';
 import Button from '@/components/global/Button';
 import CheckboxText from '@/components/global/CheckboxText';
@@ -13,15 +15,11 @@ import { ThemedText } from '@/components/global/themed-text';
 import { ThemedView } from '@/components/global/themed-view';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 
-// TODO: 실제 로그인 API로 교체.
-function checkLoginMock(id: string, password: string) {
-  return id === 'test' && password === 'test1234';
-}
-
 export default function Login() {
   const [id, setId] = useState('');
   const [password, setPassword] = useState('');
   const [loginFailed, setLoginFailed] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleIdChange = (text: string) => {
     setId(text);
@@ -33,11 +31,18 @@ export default function Login() {
     setLoginFailed(false);
   };
 
-  const handleLogin = () => {
-    const success = checkLoginMock(id, password);
-    setLoginFailed(!success);
-    if (success) {
+  const handleLogin = async () => {
+    setIsSubmitting(true);
+    try {
+      // TODO: refreshToken을 로컬(AsyncStorage 등)에 저장해서 앱을 재시작해도 로그인 상태 유지하기.
+      const response = await login({ username: id, password });
+      setAccessToken(response.accessToken);
+      setLoginFailed(false);
       router.replace('/');
+    } catch {
+      setLoginFailed(true);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -62,7 +67,7 @@ export default function Login() {
             {loginFailed && <HelperText>로그인 정보가 동일하지 않습니다.</HelperText>}
           </View>
           <CheckboxText text="자동 로그인" />
-          <Button text="로그인" theme="dark" onPress={handleLogin} />
+          <Button text="로그인" theme="dark" onPress={handleLogin} disabled={isSubmitting} />
           <View className="my-10 flex-row items-center justify-center gap-16">
             <TouchableOpacity>
               <ThemedText className="text-gray-500">아이디 찾기</ThemedText>

@@ -14,12 +14,29 @@ interface UserRow extends RowDataPacket {
 
 const router = Router();
 
-// POST /user/signup
-// 휴대폰 인증(SMS) 연동이 아직 없어서 verificationCode는 받지 않음. 연동 붙으면 여기에 검증 추가.
-router.post('/signup', async (req, res) => {
-  const { username, nickname, password, passwordConfirm, name, phone } = req.body ?? {};
+// GET /user/check-username?username=xxx
+router.get('/check-username', async (req, res) => {
+  const username = typeof req.query.username === 'string' ? req.query.username.trim() : '';
 
-  if (!username || !nickname || !password || !passwordConfirm || !name || !phone) {
+  if (!username) {
+    res.status(400).json({ message: '아이디를 입력해주세요.' });
+    return;
+  }
+
+  try {
+    const [existing] = await pool.query<UserRow[]>('SELECT id FROM user WHERE username = ?', [username]);
+    res.json({ available: existing.length === 0 });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: '중복 확인에 실패했습니다.' });
+  }
+});
+
+// POST /user/signup
+router.post('/signup', async (req, res) => {
+  const { username, nickname, password, passwordConfirm, name } = req.body ?? {};
+
+  if (!username || !nickname || !password || !passwordConfirm || !name) {
     res.status(400).json({ message: '필수 항목이 누락되었습니다.' });
     return;
   }
@@ -37,8 +54,8 @@ router.post('/signup', async (req, res) => {
 
     const passwordHash = await bcrypt.hash(password, 10);
     const [result] = await pool.query<ResultSetHeader>(
-      'INSERT INTO user (username, nickname, password_hash, name, phone) VALUES (?, ?, ?, ?, ?)',
-      [username, nickname, passwordHash, name, phone]
+      'INSERT INTO user (username, nickname, password_hash, name) VALUES (?, ?, ?, ?)',
+      [username, nickname, passwordHash, name]
     );
 
     res.status(201).json({ id: result.insertId, username, nickname });

@@ -1,76 +1,29 @@
+import { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { getRecordSummary, type RecordSummary } from '@/api/record';
 import FeaturedPhoto from '@/components/Record/FeaturedPhoto';
 import PhotoPost from '@/components/Record/PhotoPost';
 import { ThemedText } from '@/components/global/themed-text';
 import { ThemedView } from '@/components/global/themed-view';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 
-type RecordEntry = {
-  id: string;
-  type: 'mission' | 'camera';
-  location: string;
-  place: string;
-  date: string;
-  photos: string[];
-};
+const FEATURED_LOCATION = '경상북도 경주시';
 
-const makePhotos = (seedPrefix: string, count: number) =>
-  Array.from({ length: count }, (_, i) => `https://picsum.photos/seed/${seedPrefix}${i}/400/560`);
+const DAY_NAMES = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 
-const records: RecordEntry[] = [
-  {
-    id: '1',
-    type: 'mission',
-    location: '경상북도 경주시',
-    place: '경북 경주시 첨성대 앞',
-    date: '2025.05.18.SUN',
-    photos: makePhotos('r1-', 14),
-  },
-  {
-    id: '2',
-    type: 'mission',
-    location: '경상북도 경주시',
-    place: '경북 경주시 대릉원',
-    date: '2025.03.02.SUN',
-    photos: makePhotos('r2-', 3),
-  },
-  {
-    id: '3',
-    type: 'mission',
-    location: '경상북도 경주시',
-    place: '경북 경주시 불국사',
-    date: '2024.11.09.SAT',
-    photos: makePhotos('r3-', 6),
-  },
-  {
-    id: '4',
-    type: 'mission',
-    location: '경상북도 경주시',
-    place: '경북 경주시 동궁과 월지',
-    date: '2024.08.01.THU',
-    photos: makePhotos('r4-', 2),
-  },
-  {
-    id: '5',
-    type: 'camera',
-    location: '경상북도 경주시',
-    place: '',
-    date: '2025.04.20.SUN',
-    photos: makePhotos('c1-', 5),
-  },
-  {
-    id: '6',
-    type: 'camera',
-    location: '경상북도 경주시',
-    place: '',
-    date: '2024.09.12.THU',
-    photos: makePhotos('c2-', 2),
-  },
-];
+function formatDate(isoDate: string) {
+  const date = new Date(isoDate);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}.${month}.${day}.${DAY_NAMES[date.getDay()]}`;
+}
 
-const STACK_SIZE = 3;
+function formatDateRange(oldest: string, newest: string) {
+  return `${formatDate(oldest)} ~ ${formatDate(newest)}`;
+}
 
 function SectionTitle({ children }: { children: string }) {
   return (
@@ -81,23 +34,42 @@ function SectionTitle({ children }: { children: string }) {
 }
 
 export default function Record() {
-  const missionRecords = records.filter((record) => record.type === 'mission');
-  const cameraRecords = records.filter((record) => record.type === 'camera');
+  const [summary, setSummary] = useState<RecordSummary | null>(null);
 
-  const missionPhotos = missionRecords.flatMap((record) => record.photos);
+  useEffect(() => {
+    let isMounted = true;
 
-  const featuredRecords = missionRecords.slice(0, STACK_SIZE);
-  const featuredPhotos = featuredRecords.map((record) => record.photos[0]);
+    getRecordSummary()
+      .then((data) => {
+        if (isMounted) setSummary(data);
+      })
+      .catch(() => {
+        // 기록을 불러오지 못한 경우, 섹션 없이 빈 화면을 보여준다.
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const featuredPhotos = summary?.featured.photos ?? [];
   const hasFeaturedPhotos = featuredPhotos.length > 0;
-  const featuredLocation = featuredRecords[0]?.location ?? '';
   const featuredDateRange = hasFeaturedPhotos
-    ? `${featuredRecords[featuredRecords.length - 1].date} ~ ${featuredRecords[0].date}`
+    ? formatDateRange(
+        featuredPhotos[featuredPhotos.length - 1].completedAt,
+        featuredPhotos[0].completedAt
+      )
     : '';
 
-  const cameraPhotos = cameraRecords.flatMap((record) => record.photos);
+  const missionPhotos = summary?.mission.photos ?? [];
+
+  const cameraPhotos = summary?.camera.photos ?? [];
   const cameraDateRange =
-    cameraRecords.length > 0
-      ? `${cameraRecords[cameraRecords.length - 1].date} ~ ${cameraRecords[0].date}`
+    cameraPhotos.length > 0
+      ? formatDateRange(
+          cameraPhotos[cameraPhotos.length - 1].createdAt,
+          cameraPhotos[0].createdAt
+        )
       : '';
 
   return (
@@ -107,13 +79,13 @@ export default function Record() {
           {hasFeaturedPhotos && (
             <View className="gap-8">
               <ThemedText weight="bold" className="text-[24px] text-black">
-                {featuredLocation}
+                {FEATURED_LOCATION}
               </ThemedText>
               <ThemedText className="text-[12px] text-gray-900">{featuredDateRange}</ThemedText>
             </View>
           )}
 
-          <FeaturedPhoto photos={featuredPhotos} />
+          <FeaturedPhoto photos={featuredPhotos.map((photo) => photo.photoUrl)} />
 
           {missionPhotos.length > 0 && (
             <View className="mt-16 gap-16">
@@ -126,7 +98,7 @@ export default function Record() {
             <View className="mt-16 gap-16">
               <SectionTitle>최근 찍은 사진 모아보기</SectionTitle>
               <ThemedText className="text-[12px] text-gray-900">{cameraDateRange}</ThemedText>
-              <PhotoPost photos={cameraPhotos} />
+              <PhotoPost photos={cameraPhotos.map((photo) => photo.photoUrl)} />
             </View>
           )}
         </ScrollView>
