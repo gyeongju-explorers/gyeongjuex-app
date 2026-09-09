@@ -117,7 +117,7 @@ export default function MissionCamera() {
     ]);
 
     if (outcome.success) {
-      router.replace({ pathname: '/mission/badge', params: outcome.params });
+      router.replace({ pathname: '/mission/success', params: outcome.params });
     } else {
       router.replace({
         pathname: '/mission/failure',
