@@ -18,35 +18,33 @@ export default function MissionBadge() {
 
   const subtitle =
     nextTierTitle && missionsToNext
-      ? `다음 등급(${nextTierTitle})까지 미션이 ${missionsToNext}개 남았어요`
+      ? `다음 등급까지 미션이 ${missionsToNext}개 남았어요`
       : '모든 등급을 달성했어요!';
 
   return (
     <View className="flex-1 bg-white">
-      <SafeAreaView className="flex-1 px-24">
-        <ThemedText className="text-gray-700 text-xs">뱃지</ThemedText>
-
-        <View className="flex-1 items-center justify-center gap-16 pb-40">
-          <ThemedText className="text-2xl font-bold text-center">
+      <SafeAreaView className="flex-1 px-24 justify-center gap-100">
+        <View className="items-center justify-center gap-20">
+          <ThemedText className="text-3xl font-bold text-center">
             {placeName ? `${placeName} 픽투어 완료!` : '픽투어 완료!'}
           </ThemedText>
           <ThemedText className="text-gray-900 text-center">{subtitle}</ThemedText>
 
-          <Image source={badgeEmblem} style={{ width: 220, height: 220 }} className="mt-24" />
+          <Image source={badgeEmblem} style={{ width: 270, height: 270 }} className="mt-24" />
         </View>
 
-        <View className="flex-row gap-12 pb-40">
+        <View className="flex-row gap-12 px-36">
           <Pressable
             onPress={() => router.replace('/')}
-            className="flex-1 items-center rounded-full bg-secondary py-16"
+            className="flex-1 items-center rounded-full bg-secondary py-12"
           >
-            <ThemedText className="text-white font-bold">홈으로</ThemedText>
+            <ThemedText className="text-white font-bold text-base px-36">홈으로</ThemedText>
           </Pressable>
           <Pressable
             onPress={() => router.push('/badge')}
-            className="flex-1 items-center rounded-full bg-primary py-16"
+            className="flex-1 items-center rounded-full bg-primary py-12 px-36"
           >
-            <ThemedText className="text-black font-bold">뱃지 보러가기</ThemedText>
+            <ThemedText className="text-black font-bold text-base">뱃지 보러가기</ThemedText>
           </Pressable>
         </View>
       </SafeAreaView>
