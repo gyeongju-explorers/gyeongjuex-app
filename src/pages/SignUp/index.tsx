@@ -1,8 +1,11 @@
 import { Image } from 'expo-image';
+import { router } from 'expo-router';
+import { isAxiosError } from 'axios';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { checkUsernameAvailable, signup } from '@/api/auth';
 import visibleActiveIcon from '@/assets/icons/visible-active.svg';
 import visibleInactiveIcon from '@/assets/icons/visible-inactive.svg';
 import Button from '@/components/global/Button';
@@ -18,9 +21,11 @@ function Label({ children }: { children: string }) {
   return <ThemedText className="text-sm leading-[16px] text-black">{children}</ThemedText>;
 }
 
-// TODO: 실제 아이디 중복확인 API로 교체.
-function checkIdDuplicateMock(value: string) {
-  return value.trim().toLowerCase() === 'test';
+function getErrorMessage(error: unknown, fallback: string) {
+  if (isAxiosError(error) && typeof error.response?.data?.message === 'string') {
+    return error.response.data.message;
+  }
+  return fallback;
 }
 
 function PasswordInput({
@@ -59,11 +64,15 @@ function PasswordInput({
 
 export default function SignUp() {
   const [id, setId] = useState('');
-  const [idCheckStatus, setIdCheckStatus] = useState<'idle' | 'available' | 'duplicate'>('idle');
+  const [idCheckStatus, setIdCheckStatus] = useState<'idle' | 'checking' | 'available' | 'duplicate'>(
+    'idle',
+  );
   const [nickname, setNickname] = useState('');
   const [password, setPassword] = useState('');
   const [passwordConfirm, setPasswordConfirm] = useState('');
   const [name, setName] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
 
   const isComplete = [id, nickname, password, passwordConfirm, name].every(
     (value) => value.trim().length > 0,
@@ -76,8 +85,27 @@ export default function SignUp() {
     setIdCheckStatus('idle');
   };
 
-  const handleIdCheck = () => {
-    setIdCheckStatus(checkIdDuplicateMock(id) ? 'duplicate' : 'available');
+  const handleIdCheck = async () => {
+    setIdCheckStatus('checking');
+    try {
+      const available = await checkUsernameAvailable(id);
+      setIdCheckStatus(available ? 'available' : 'duplicate');
+    } catch {
+      setIdCheckStatus('idle');
+    }
+  };
+
+  const handleSignup = async () => {
+    setSubmitError('');
+    setIsSubmitting(true);
+    try {
+      await signup({ username: id, nickname, password, passwordConfirm, name });
+      router.replace('/login');
+    } catch (error) {
+      setSubmitError(getErrorMessage(error, '회원가입에 실패했습니다.'));
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -98,7 +126,7 @@ export default function SignUp() {
                 />
                 <SmallButton
                   text="중복확인"
-                  disabled={id.trim().length === 0}
+                  disabled={id.trim().length === 0 || idCheckStatus === 'checking'}
                   onPress={handleIdCheck}
                 />
               </View>
@@ -130,13 +158,16 @@ export default function SignUp() {
               <Label>이름</Label>
               <Input placeholder="이름을 입력하세요" value={name} onChangeText={setName} />
             </View>
+
+            {submitError.length > 0 && <HelperText>{submitError}</HelperText>}
           </ScrollView>
         </View>
 
         <Button
           text="가입하기"
           rounded={false}
-          disabled={!isComplete}
+          disabled={!isComplete || isSubmitting}
+          onPress={handleSignup}
           style={styles.submitButton}
         />
       </SafeAreaView>
