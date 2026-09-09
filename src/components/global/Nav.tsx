@@ -32,9 +32,11 @@ const NAV_ITEMS: NavItemDef[] = [
   },
   {
     label: '배지',
+    href: '/badge',
     size: 17,
     activeIcon: badgeActiveIcon,
     inactiveIcon: badgeInactiveIcon,
+    onPress: () => router.replace('/badge'),
   },
   {
     label: '기록',

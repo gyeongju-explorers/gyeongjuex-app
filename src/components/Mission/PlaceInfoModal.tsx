@@ -26,7 +26,20 @@ const PlaceInfoModal = ({ place }: PlaceInfoModalProps) => {
               {place.address}
             </ThemedText>
           </View>
-          <MissionButton text="PICK !" className="w-full" />
+          <MissionButton
+            text="PICK !"
+            className="w-full"
+            href={{
+              pathname: '/mission/camera',
+              params: {
+                placeId: String(place.id),
+                image: place.image ?? '',
+                name: place.name,
+                latitude: place.latitude !== null ? String(place.latitude) : '',
+                longitude: place.longitude !== null ? String(place.longitude) : '',
+              },
+            }}
+          />
         </View>
       </View>
     </View>
