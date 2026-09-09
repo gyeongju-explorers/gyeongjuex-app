@@ -7,7 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import badgeEmblem from '@/assets/icons/badge-emblem.svg';
 import { ThemedText } from '@/components/global/themed-text';
 
-export default function MissionBadge() {
+export default function MissionSuccess() {
   const { placeName, nextTierTitle, missionsToNext } = useLocalSearchParams<{
     placeName?: string;
     completedCount?: string;
