@@ -4,10 +4,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { getRecordSummary, type RecordSummary } from '@/api/record';
 import FeaturedPhoto from '@/components/Record/FeaturedPhoto';
+import PhotoDetailOverlay from '@/components/Record/PhotoDetailOverlay';
 import PhotoPost from '@/components/Record/PhotoPost';
 import { ThemedText } from '@/components/global/themed-text';
 import { ThemedView } from '@/components/global/themed-view';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+
+type PhotoGroup = 'mission' | 'camera';
 
 const FEATURED_LOCATION = '경상북도 경주시';
 
@@ -35,6 +38,8 @@ function SectionTitle({ children }: { children: string }) {
 
 export default function Record() {
   const [summary, setSummary] = useState<RecordSummary | null>(null);
+  const [viewingGroup, setViewingGroup] = useState<PhotoGroup | null>(null);
+  const [viewingIndex, setViewingIndex] = useState(0);
 
   useEffect(() => {
     let isMounted = true;
@@ -90,7 +95,13 @@ export default function Record() {
           {missionPhotos.length > 0 && (
             <View className="mt-16 gap-16">
               <SectionTitle>미션 모아보기</SectionTitle>
-              <PhotoPost photos={missionPhotos} />
+              <PhotoPost
+                photos={missionPhotos}
+                onPressPhoto={(index) => {
+                  setViewingGroup('mission');
+                  setViewingIndex(index);
+                }}
+              />
             </View>
           )}
 
@@ -98,11 +109,40 @@ export default function Record() {
             <View className="mt-16 gap-16">
               <SectionTitle>최근 찍은 사진 모아보기</SectionTitle>
               <ThemedText className="text-[12px] text-gray-900">{cameraDateRange}</ThemedText>
-              <PhotoPost photos={cameraPhotos.map((photo) => photo.photoUrl)} />
+              <PhotoPost
+                photos={cameraPhotos.map((photo) => photo.photoUrl)}
+                onPressPhoto={(index) => {
+                  setViewingGroup('camera');
+                  setViewingIndex(index);
+                }}
+              />
             </View>
           )}
         </ScrollView>
       </SafeAreaView>
+
+      {viewingGroup === 'mission' && (
+        <PhotoDetailOverlay
+          photos={missionPhotos}
+          initialIndex={viewingIndex}
+          onClose={() => setViewingGroup(null)}
+        />
+      )}
+      {viewingGroup === 'camera' && (
+        <PhotoDetailOverlay
+          photos={cameraPhotos.map((photo) => photo.photoUrl)}
+          initialIndex={viewingIndex}
+          onClose={() => setViewingGroup(null)}
+          header={
+            <View className="mb-16 w-full gap-8 px-24">
+              <ThemedText weight="bold" className="text-[24px] text-white">
+                {FEATURED_LOCATION}
+              </ThemedText>
+              <ThemedText className="text-[12px] text-gray-100">{cameraDateRange}</ThemedText>
+            </View>
+          }
+        />
+      )}
     </ThemedView>
   );
 }

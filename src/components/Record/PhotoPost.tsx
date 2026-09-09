@@ -1,5 +1,5 @@
 import { Image } from 'expo-image';
-import { View } from 'react-native';
+import { Pressable, View } from 'react-native';
 
 import { ThemedText } from '@/components/global/themed-text';
 
@@ -7,11 +7,12 @@ type PhotoPostProps = {
   location?: string;
   date?: string;
   photos: string[];
+  onPressPhoto?: (index: number) => void;
 };
 
 const VISIBLE_COUNT = 4;
 
-export default function PhotoPost({ location, date, photos }: PhotoPostProps) {
+export default function PhotoPost({ location, date, photos, onPressPhoto }: PhotoPostProps) {
   const visiblePhotos = photos.slice(0, VISIBLE_COUNT);
   const extraCount = photos.length - VISIBLE_COUNT;
 
@@ -37,7 +38,12 @@ export default function PhotoPost({ location, date, photos }: PhotoPostProps) {
           const overlap = index === 0 ? '' : '-ml-8';
 
           return (
-            <View key={index} className={`relative h-[118px] w-[85px] ${overlap}`}>
+            <Pressable
+              key={index}
+              className={`relative h-[118px] w-[85px] ${overlap}`}
+              onPress={() => onPressPhoto?.(index)}
+              disabled={!onPressPhoto}
+            >
               <Image
                 source={{ uri }}
                 contentFit="cover"
@@ -51,7 +57,7 @@ export default function PhotoPost({ location, date, photos }: PhotoPostProps) {
                   </ThemedText>
                 </View>
               )}
-            </View>
+            </Pressable>
           );
         })}
       </View>

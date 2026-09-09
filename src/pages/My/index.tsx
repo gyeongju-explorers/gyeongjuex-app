@@ -67,6 +67,10 @@ export default function My() {
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <View>
+          <TouchableOpacity className="absolute right-0 top-4 z-10" onPress={handleToggleEdit}>
+            <ThemedText className="text-gray-700">{isEditing ? '완료' : '수정하기'}</ThemedText>
+          </TouchableOpacity>
+
           <View className="items-center pt-[37px]">
             <View className="relative">
               <Image source={profileDefaultIcon} style={{ width: 90, height: 90 }} />
@@ -76,11 +80,7 @@ export default function My() {
             </View>
           </View>
 
-          <TouchableOpacity className="mt-24" onPress={handleToggleEdit}>
-            <ThemedText className="text-gray-700">{isEditing ? '완료' : '수정하기'}</ThemedText>
-          </TouchableOpacity>
-
-          <View className="mt-10">
+          <View className="mt-24">
             <InfoRow
               label="이름"
               value={form.name}
