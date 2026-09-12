@@ -1,21 +1,27 @@
-import { useMemo } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Asset } from 'expo-asset';
+import { useEffect, useRef } from 'react';
+import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import type { Place } from '@/api/places';
+import markerInactiveIcon from '@/assets/icons/marker-inactive.svg';
+import markerSelectedIcon from '@/assets/icons/marker-selected.svg';
 import { default as image1, default as image2 } from '@/assets/images/image2.png';
-import { ThemedText } from '@/components/global/themed-text';
 import { ThemedView } from '@/components/global/themed-view';
-import Marker from '@/components/Mission/Marker';
 import type { MissionCardProps } from '@/components/Mission/MissionCard';
 import MissionChipList from '@/components/Mission/MissionChipList';
 import MissionListModal from '@/components/Mission/MissionListModal';
-import PhotoMarker from '@/components/Mission/PhotoMarker';
 import PhotoViewerOverlay from '@/components/Mission/PhotoViewerOverlay';
 import PlaceInfoModal from '@/components/Mission/PlaceInfoModal';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 
 import { useMissionMapData } from './useMissionMapData';
+
+declare global {
+  interface Window {
+    naver: any;
+  }
+}
 
 const MISSIONS: MissionCardProps[] = [
   {
@@ -26,26 +32,54 @@ const MISSIONS: MissionCardProps[] = [
   { photos: [image2, image1], title: '동궁과 월지', description: '경주 동궁과 월지 일대' },
 ];
 
-// 위도/경도를 0~1 사이 값으로 정규화 — 실제 지도 없이도 마커들의 상대 위치를 대충 재현.
-function normalizeCoordinates(places: Place[]) {
-  const withCoords = places.filter(
-    (place): place is Place & { latitude: number; longitude: number } =>
-      place.latitude !== null && place.longitude !== null,
-  );
+const GYEONGJU_CENTER = { latitude: 35.8354, longitude: 129.2194 };
+const NAVER_MAPS_SCRIPT_ID = 'naver-maps-web-sdk';
 
-  const lats = withCoords.map((place) => place.latitude);
-  const lngs = withCoords.map((place) => place.longitude);
-  const [minLat, maxLat] = [Math.min(...lats), Math.max(...lats)];
-  const [minLng, maxLng] = [Math.min(...lngs), Math.max(...lngs)];
-  const latSpan = maxLat - minLat || 1;
-  const lngSpan = maxLng - minLng || 1;
+// 스크립트 태그는 앱 생명주기 동안 한 번만 주입 — 화면을 여러 번 드나들어도 재삽입하지 않는다.
+let scriptLoadPromise: Promise<void> | null = null;
+function loadNaverMapsScript(clientId: string): Promise<void> {
+  if (window.naver?.maps) return Promise.resolve();
+  if (scriptLoadPromise) return scriptLoadPromise;
 
-  return withCoords.map((place) => ({
-    place,
-    // 위도가 클수록(북쪽) 화면 위쪽 — y는 반전.
-    xPercent: ((place.longitude - minLng) / lngSpan) * 70 + 15,
-    yPercent: 70 - ((place.latitude - minLat) / latSpan) * 55,
-  }));
+  scriptLoadPromise = new Promise((resolve, reject) => {
+    const existing = document.getElementById(NAVER_MAPS_SCRIPT_ID) as HTMLScriptElement | null;
+    if (existing) {
+      existing.addEventListener('load', () => resolve());
+      existing.addEventListener('error', reject);
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.id = NAVER_MAPS_SCRIPT_ID;
+    script.src = `https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=${clientId}`;
+    script.async = true;
+    script.onload = () => resolve();
+    script.onerror = reject;
+    document.head.appendChild(script);
+  });
+
+  return scriptLoadPromise;
+}
+
+// 완료한 장소는 대표 사진을, 미완료 장소는 기존 마커 아이콘을 그대로 재사용해 HTML 오버레이로 그린다.
+function buildMarkerIcon(place: Place, isSelected: boolean) {
+  if (place.isCompleted) {
+    const photoUrl = place.image ?? Asset.fromModule(image1).uri;
+    return {
+      content: `<div style="width:56px;height:74px;border-radius:14px;border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.25);background:#ddd center/cover no-repeat url('${photoUrl}')"></div>`,
+      size: new window.naver.maps.Size(56, 74),
+      anchor: new window.naver.maps.Point(28, 74),
+    };
+  }
+
+  const iconSource = isSelected ? markerSelectedIcon : markerInactiveIcon;
+  const size = isSelected ? 30 : 25;
+  return {
+    url: Asset.fromModule(iconSource).uri,
+    size: new window.naver.maps.Size(size, size),
+    scaledSize: new window.naver.maps.Size(size, size),
+    anchor: new window.naver.maps.Point(size / 2, size / 2),
+  };
 }
 
 export default function MissionMap() {
@@ -62,29 +96,65 @@ export default function MissionMap() {
     setIsListModalOpen,
   } = useMissionMapData();
 
-  const markers = useMemo(() => normalizeCoordinates(filteredPlaces), [filteredPlaces]);
+  const mapContainerRef = useRef<View>(null);
+  const mapRef = useRef<any>(null);
+  const markersRef = useRef<any[]>([]);
+
+  // 지도 인스턴스는 한 번만 생성.
+  useEffect(() => {
+    const clientId = process.env.EXPO_PUBLIC_NAVER_MAP_CLIENT_ID;
+    if (!clientId) {
+      console.warn('EXPO_PUBLIC_NAVER_MAP_CLIENT_ID가 설정되어 있지 않습니다.');
+      return;
+    }
+
+    let cancelled = false;
+
+    loadNaverMapsScript(clientId).then(() => {
+      if (cancelled) return;
+      const node = mapContainerRef.current as unknown as HTMLDivElement;
+      if (!node) return;
+
+      mapRef.current = new window.naver.maps.Map(node, {
+        center: new window.naver.maps.LatLng(GYEONGJU_CENTER.latitude, GYEONGJU_CENTER.longitude),
+        zoom: 14,
+      });
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // 장소 목록/선택 상태가 바뀔 때마다 마커를 다시 그린다.
+  useEffect(() => {
+    if (!mapRef.current || !window.naver?.maps) return;
+
+    markersRef.current.forEach((marker) => marker.setMap(null));
+    markersRef.current = filteredPlaces
+      .filter((place) => place.latitude !== null && place.longitude !== null)
+      .map((place) => {
+        const marker = new window.naver.maps.Marker({
+          position: new window.naver.maps.LatLng(place.latitude!, place.longitude!),
+          map: mapRef.current,
+          icon: buildMarkerIcon(place, selectedPlaceId === place.id),
+        });
+
+        window.naver.maps.Event.addListener(marker, 'click', () => {
+          if (place.isCompleted) {
+            setViewingPhotoPlaceId(place.id);
+          } else {
+            setSelectedPlaceId((current) => (current === place.id ? null : place.id));
+          }
+        });
+
+        return marker;
+      });
+  }, [filteredPlaces, selectedPlaceId, setSelectedPlaceId, setViewingPhotoPlaceId]);
 
   return (
     <ThemedView style={styles.container}>
-      <View style={StyleSheet.absoluteFill} className="bg-gray-100">
-        {markers.map(({ place, xPercent, yPercent }) => (
-          <Pressable
-            key={place.id}
-            style={{ position: 'absolute', left: `${xPercent}%`, top: `${yPercent}%` }}
-            onPress={() =>
-              place.isCompleted
-                ? setViewingPhotoPlaceId(place.id)
-                : setSelectedPlaceId((current) => (current === place.id ? null : place.id))
-            }
-          >
-            {place.isCompleted ? (
-              <PhotoMarker photos={[place.image ? { uri: place.image } : image1, image2]} active />
-            ) : (
-              <Marker variant={selectedPlaceId === place.id ? 'selected' : 'inactive'} />
-            )}
-          </Pressable>
-        ))}
-      </View>
+      <View ref={mapContainerRef} style={StyleSheet.absoluteFill} />
       <SafeAreaView style={styles.safeArea} pointerEvents="box-none">
         <View pointerEvents="box-none">
           <MissionChipList
@@ -92,9 +162,6 @@ export default function MissionMap() {
             onSelectCategory={setSelectedCategory}
           />
         </View>
-        <ThemedText className="text-gray-400 text-xs px-4">
-          웹 미리보기: 지도 타일 없이 마커 위치만 대략 재현했어요.
-        </ThemedText>
       </SafeAreaView>
       {selectedPlace && <PlaceInfoModal place={selectedPlace} />}
       {viewingPhotoPlace && (

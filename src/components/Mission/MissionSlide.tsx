@@ -17,6 +17,7 @@ import Animated, {
     useSharedValue,
     type SharedValue,
 } from 'react-native-reanimated';
+import HomeButton from './HomeButton';
 import MissionButton from './MissionButton';
 import MissionListButton from './MissionListButton';
 
@@ -138,6 +139,9 @@ const MissionSlide = ({ photos, onOpenListModal }: MissionSlideProps) => {
       <View className="absolute inset-x-0 bottom-40 items-center">
         <View className="items-center">
           <MissionButton text="PICK !" />
+          <View className="absolute right-full mr-20">
+            <HomeButton />
+          </View>
           <View className="absolute left-full ml-20">
             <MissionListButton onPress={onOpenListModal} />
           </View>
