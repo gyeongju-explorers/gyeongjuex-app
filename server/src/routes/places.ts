@@ -134,6 +134,52 @@ router.get('/places/nearby', requireAuth, async (req: AuthedRequest, res) => {
   }
 });
 
+// GET /api/places/completed?lat=&lng= (일반 사진 촬영 시 사진첩 배정용 — 완료한 미션 장소만, lat/lng 있으면 가까운 순).
+router.get('/places/completed', requireAuth, async (req: AuthedRequest, res) => {
+  const lat = parseCoordinate(req.query.lat);
+  const lng = parseCoordinate(req.query.lng);
+  const hasLocation = lat !== null && lng !== null;
+
+  try {
+    const [rows] = hasLocation
+      ? await pool.query<PlaceWithCompletionRow[]>(
+          `SELECT p.id, p.name, p.address, p.image, p.category, p.latitude, p.longitude,
+                  ${DISTANCE_KM_EXPR} AS distance_km,
+                  1 AS is_completed
+           FROM place p
+           INNER JOIN mission_completion mc ON mc.place_id = p.id AND mc.user_id = ?
+           ORDER BY (p.latitude IS NULL OR p.longitude IS NULL), distance_km ASC`,
+          [lat, lng, lat, req.userId]
+        )
+      : await pool.query<PlaceWithCompletionRow[]>(
+          `SELECT p.id, p.name, p.address, p.image, p.category, p.latitude, p.longitude,
+                  NULL AS distance_km,
+                  1 AS is_completed
+           FROM place p
+           INNER JOIN mission_completion mc ON mc.place_id = p.id AND mc.user_id = ?
+           ORDER BY mc.completed_at DESC`,
+          [req.userId]
+        );
+
+    const places = rows.map((row) => ({
+      id: row.id,
+      name: row.name,
+      address: row.address,
+      image: row.image,
+      category: row.category,
+      latitude: row.latitude,
+      longitude: row.longitude,
+      distance: row.distance_km !== null ? Math.round(row.distance_km * 10) / 10 : null,
+      isCompleted: true,
+    }));
+
+    res.json({ places });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: '완료한 미션 장소를 불러오지 못했습니다.' });
+  }
+});
+
 // GET /api/places/:id
 router.get('/places/:id', requireAuth, async (req: AuthedRequest, res) => {
   const id = Number(req.params.id);
