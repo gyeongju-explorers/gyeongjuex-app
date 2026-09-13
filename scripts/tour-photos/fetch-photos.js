@@ -4,6 +4,11 @@
  * 한국관광공사 TourAPI에서 places.json에 적힌 장소별로 사진을 검색해
  * output.json에 장소당 1장(대표 이미지 후보)을 저장한다.
  *
+ * 주의: 여기서 얻는 location은 사진 등록자가 자유롭게 써넣은 "촬영 장소" 캡션일 뿐이라
+ * 정확도가 들쭉날쭉하고 재실행할 때마다 API가 다른 사진을 1등으로 줄 수도 있다.
+ * 그래서 output.json에는 location을 남기지 않는다 — DB에 넣을 실제 주소는
+ * places.json에 사람이 직접 적어둔 address를 쓴다 (generate-seed-sql.js 참고).
+ *
  * 소스 우선순위:
  *   1) PhokoAwrdService (관광공모전 수상작) — 수는 적지만(전국 95장) 큐레이션된 고품질 사진
  *   2) PhotoGalleryService1 (관광사진갤러리) — 전국 수만 장, 커버리지가 훨씬 넓은 일반 사진 DB
@@ -167,7 +172,6 @@ async function main() {
         console.log(`[매칭] "${place.name}" -> "${selected.title}" (source=${selected.source}, 후보 ${poolSize}개, 전체 조회 ${totalCandidates}개)`);
         results.push({
           place: place.name,
-          location: selected.location,
           image: selected.thumb || selected.image,
         });
       }

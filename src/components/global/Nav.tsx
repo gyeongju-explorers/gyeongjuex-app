@@ -73,7 +73,10 @@ export default function Nav() {
       </View>
 
       <View className="absolute left-0 right-0 top-[-35px] items-center" pointerEvents="box-none">
-        <Pressable style={{ filter: 'drop-shadow(0 6.814px 6.814px rgba(0, 0, 0, 0.25))' }}>
+        <Pressable
+          style={{ filter: 'drop-shadow(0 6.814px 6.814px rgba(0, 0, 0, 0.25))' }}
+          onPress={() => router.push('/camera')}
+        >
           <Image source={pickIcon} style={{ width: 76, height: 76 }} />
         </Pressable>
       </View>
