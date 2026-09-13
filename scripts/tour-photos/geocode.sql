@@ -12,3 +12,4 @@ UPDATE place SET latitude = 36.0115142, longitude = 129.1633444 WHERE name = '�
 UPDATE place SET latitude = 35.8399949, longitude = 129.2856989 WHERE name = '보문관광단지';
 UPDATE place SET latitude = 35.6860369, longitude = 129.4741654 WHERE name = '양남 주상절리 파도소리길';
 UPDATE place SET latitude = 35.7958722, longitude = 129.2323865 WHERE name = '경주 남산';
+UPDATE place SET latitude = 35.830833, longitude = 129.226111 WHERE name = '경주 월성';
