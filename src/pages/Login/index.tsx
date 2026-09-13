@@ -1,11 +1,12 @@
 import { Image } from 'expo-image';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { login } from '@/api/auth';
 import { setAccessToken } from '@/api/session';
+import titleCompleteImage from '@/assets/images/title-complete.svg';
 import titleImage from '@/assets/images/title.svg';
 import Button from '@/components/global/Button';
 import CheckboxText from '@/components/global/CheckboxText';
@@ -16,6 +17,7 @@ import { ThemedView } from '@/components/global/themed-view';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 
 export default function Login() {
+  const { signupComplete } = useLocalSearchParams<{ signupComplete?: string }>();
   const [id, setId] = useState('');
   const [password, setPassword] = useState('');
   const [loginFailed, setLoginFailed] = useState(false);
@@ -50,7 +52,7 @@ export default function Login() {
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <Image
-          source={titleImage}
+          source={signupComplete ? titleCompleteImage : titleImage}
           contentFit="contain"
           style={{ width: 242, height: 110, marginTop: 100 }}
         />

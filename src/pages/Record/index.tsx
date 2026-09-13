@@ -1,8 +1,11 @@
+import { Image } from 'expo-image';
 import { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { getRecordSummary, type RecordSummary } from '@/api/record';
+import recordEmptyImage from '@/assets/images/record-empty.svg';
+import MissionButton from '@/components/Mission/MissionButton';
 import FeaturedPhoto from '@/components/Record/FeaturedPhoto';
 import PhotoDetailOverlay from '@/components/Record/PhotoDetailOverlay';
 import PhotoPost from '@/components/Record/PhotoPost';
@@ -76,6 +79,31 @@ export default function Record() {
           cameraPhotos[0].createdAt
         )
       : '';
+
+  const hasRecords = hasFeaturedPhotos || missionPhotos.length > 0 || cameraPhotos.length > 0;
+
+  if (!hasRecords) {
+    return (
+      <ThemedView style={styles.container}>
+        <SafeAreaView style={styles.safeArea}>
+          <View className="flex-1 items-center px-24">
+            <Image
+              source={recordEmptyImage}
+              contentFit="contain"
+              style={{ width: 229, height: 179, marginTop: 125, marginBottom: 50 }}
+            />
+            <View className="items-center gap-20 mb-44">
+              <ThemedText weight="bold" className="text-xl text-black">
+                미션 기록이 없어요
+              </ThemedText>
+              <ThemedText className="text-gray-500">미션을 해결하고 기록을 남겨보세요!</ThemedText>
+            </View>
+            <MissionButton text="미션 하러가기" href="/mission/map" className="self-center" />
+          </View>
+        </SafeAreaView>
+      </ThemedView>
+    );
+  }
 
   return (
     <ThemedView style={styles.container}>
