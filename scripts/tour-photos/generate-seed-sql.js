@@ -1,9 +1,12 @@
 #!/usr/bin/env node
 
 /**
- * output.json(TourAPI에서 추출한 장소별 사진 매칭 결과)을 읽어서
- * place 테이블에 넣을 INSERT문(seed.sql)을 생성한다.
- * output.json에는 fetch-photos.js가 검증까지 끝낸 것만 들어있으므로 그대로 사용한다.
+ * output.json(fetch-photos.js가 찾은 장소별 사진)과 places.json(사람이 직접 관리하는
+ * 주소)을 이름으로 합쳐서 place 테이블에 넣을 INSERT문(seed.sql)을 생성한다.
+ *
+ * 주소는 절대 TourAPI 결과에서 가져오지 않는다 — places.json의 address 필드를 직접
+ * 채워야 하며, 비어 있으면 그 장소는 경고만 출력하고 seed.sql에서 제외한다.
+ * (fetch-photos.js를 몇 번을 다시 돌려도 이 파일이 만드는 주소는 안 바뀐다.)
  *
  * 실행: node scripts/tour-photos/generate-seed-sql.js
  *
@@ -14,6 +17,7 @@
 const fs = require('fs');
 const path = require('path');
 
+const PLACES_PATH = path.join(__dirname, 'places.json');
 const OUTPUT_PATH = path.join(__dirname, 'output.json');
 const SEED_PATH = path.join(__dirname, 'seed.sql');
 
@@ -23,20 +27,30 @@ function escape(value) {
 }
 
 function main() {
-  const places = JSON.parse(fs.readFileSync(OUTPUT_PATH, 'utf-8'));
+  const places = JSON.parse(fs.readFileSync(PLACES_PATH, 'utf-8'));
+  const photos = JSON.parse(fs.readFileSync(OUTPUT_PATH, 'utf-8'));
+
+  const addressByName = new Map(places.map((p) => [p.name, p.address]));
+
+  const rows = [];
+  for (const photo of photos) {
+    const address = addressByName.get(photo.place);
+    if (!address) {
+      console.warn(`[제외] "${photo.place}" — places.json에 address가 없음. 직접 채워야 함`);
+      continue;
+    }
+    rows.push(`  (${escape(photo.place)}, ${escape(address)}, ${escape(photo.image)})`);
+  }
 
   const lines = [
-    '-- scripts/tour-photos/fetch-photos.js 결과를 기반으로 자동 생성됨. 수정 후 직접 실행하지 말고 재생성할 것.',
+    '-- scripts/tour-photos/generate-seed-sql.js로 생성됨 (사진: fetch-photos.js/output.json, 주소: places.json). 수정 후 직접 실행하지 말고 재생성할 것.',
     'INSERT INTO place (name, address, image)',
     'VALUES',
   ];
-
-  const rows = places.map((p) => `  (${escape(p.place)}, ${escape(p.location)}, ${escape(p.image)})`);
-
   lines.push(rows.join(',\n') + ';');
 
   fs.writeFileSync(SEED_PATH, lines.join('\n') + '\n', 'utf-8');
-  console.log(`${places.length}개 장소 -> ${SEED_PATH}`);
+  console.log(`${rows.length}개 장소 -> ${SEED_PATH}`);
 }
 
 main();
