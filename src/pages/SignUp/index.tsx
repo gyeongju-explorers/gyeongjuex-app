@@ -1,20 +1,21 @@
+import { isAxiosError } from 'axios';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
-import { isAxiosError } from 'axios';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { checkUsernameAvailable, signup } from '@/api/auth';
+import checkIcon from '@/assets/icons/check.svg';
 import visibleActiveIcon from '@/assets/icons/visible-active.svg';
 import visibleInactiveIcon from '@/assets/icons/visible-inactive.svg';
 import Button from '@/components/global/Button';
 import HelperText from '@/components/global/HelperText';
 import { Input } from '@/components/global/Input';
+import SmallButton from '@/components/global/SmallButton';
 import { ThemedText } from '@/components/global/themed-text';
 import { ThemedView } from '@/components/global/themed-view';
 import Header from '@/components/SignUp/Header';
-import SmallButton from '@/components/global/SmallButton';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
 
 function Label({ children }: { children: string }) {
@@ -26,6 +27,28 @@ function getErrorMessage(error: unknown, fallback: string) {
     return error.response.data.message;
   }
   return fallback;
+}
+
+const PASSWORD_RULE_REGEX = /^(?=.*[A-Za-z])(?=.*[0-9])(?=.*[^A-Za-z0-9]).{8,}$/;
+
+function isPasswordValid(password: string) {
+  return PASSWORD_RULE_REGEX.test(password);
+}
+
+function PasswordRequirement({ satisfied }: { satisfied: boolean }) {
+  const color = satisfied ? '#29D9CE' : '#D1D1D1';
+
+  return (
+    <View className="flex-row items-center gap-8">
+      <Image source={checkIcon} tintColor={color} style={{ width: 10, height: 7.5 }} />
+      <ThemedText
+        className={satisfied ? 'text-primary' : 'text-gray-500'}
+        style={{ fontSize: 10 }}
+      >
+        8자 이상, 영문/숫자/특수문자 조합
+      </ThemedText>
+    </View>
+  );
 }
 
 function PasswordInput({
@@ -74,11 +97,12 @@ export default function SignUp() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
 
-  const isComplete = [id, nickname, password, passwordConfirm, name].every(
-    (value) => value.trim().length > 0,
-  );
-
   const passwordMismatch = passwordConfirm.length > 0 && password !== passwordConfirm;
+
+  const isComplete =
+    [id, nickname, password, passwordConfirm, name].every((value) => value.trim().length > 0) &&
+    isPasswordValid(password) &&
+    !passwordMismatch;
 
   const handleIdChange = (text: string) => {
     setId(text);
@@ -100,7 +124,7 @@ export default function SignUp() {
     setIsSubmitting(true);
     try {
       await signup({ username: id, nickname, password, passwordConfirm, name });
-      router.replace('/login');
+      router.replace({ pathname: '/login', params: { signupComplete: '1' } });
     } catch (error) {
       setSubmitError(getErrorMessage(error, '회원가입에 실패했습니다.'));
     } finally {
@@ -146,6 +170,11 @@ export default function SignUp() {
             <View className="gap-8">
               <Label>비밀번호</Label>
               <PasswordInput placeholder="비밀번호" value={password} onChangeText={setPassword} />
+              <PasswordRequirement satisfied={isPasswordValid(password)} />
+            </View>
+
+            <View className="gap-8">
+              <Label>비밀번호 확인</Label>
               <PasswordInput
                 placeholder="비밀번호 확인"
                 value={passwordConfirm}
