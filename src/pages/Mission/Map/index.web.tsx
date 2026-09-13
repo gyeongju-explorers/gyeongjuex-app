@@ -104,7 +104,10 @@ export default function MissionMap() {
   useEffect(() => {
     const clientId = process.env.EXPO_PUBLIC_NAVER_MAP_CLIENT_ID;
     if (!clientId) {
-      console.warn('EXPO_PUBLIC_NAVER_MAP_CLIENT_ID가 설정되어 있지 않습니다.');
+      console.warn(
+        'EXPO_PUBLIC_NAVER_MAP_CLIENT_ID가 설정되어 있지 않습니다. ' +
+          'NCP 콘솔의 Maps 애플리케이션에 이 화면을 띄우는 도메인이 Web 서비스 URL로 등록되어 있는지 확인하세요.',
+      );
       return;
     }
 
@@ -118,6 +121,12 @@ export default function MissionMap() {
       mapRef.current = new window.naver.maps.Map(node, {
         center: new window.naver.maps.LatLng(GYEONGJU_CENTER.latitude, GYEONGJU_CENTER.longitude),
         zoom: 14,
+      });
+
+      // RN Web의 flex 레이아웃이 안정되기 전에 지도가 만들어지면 컨테이너 크기를 0으로 잘못
+      // 잡아서 타일이 뷰포트 밖으로 어긋난다. 다음 프레임에 사이즈를 다시 계산시켜 바로잡는다.
+      requestAnimationFrame(() => {
+        mapRef.current?.refresh(true);
       });
     });
 
@@ -154,7 +163,12 @@ export default function MissionMap() {
 
   return (
     <ThemedView style={styles.container}>
-      <View ref={mapContainerRef} style={StyleSheet.absoluteFill} />
+      {/* 네이버 지도 SDK가 넘겨받은 div의 position/overflow를 직접 덮어쓰기 때문에, absoluteFill로 크기를
+          잡는 바깥 View와 지도가 실제로 붙는 안쪽 View를 분리한다 — 안쪽은 %기반 크기라 SDK가 position을
+          바꿔도 크기가 무너지지 않는다. */}
+      <View style={StyleSheet.absoluteFill}>
+        <View ref={mapContainerRef} style={styles.mapSurface} />
+      </View>
       <SafeAreaView style={styles.safeArea} pointerEvents="box-none">
         <View pointerEvents="box-none">
           <MissionChipList
@@ -187,6 +201,10 @@ export default function MissionMap() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  mapSurface: {
+    width: '100%',
+    height: '100%',
   },
   safeArea: {
     flex: 1,
