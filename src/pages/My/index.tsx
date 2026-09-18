@@ -4,11 +4,15 @@ import { useState } from 'react';
 import { StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { withdraw } from '@/api/auth';
+import { setAccessToken } from '@/api/session';
 import cameraIcon from '@/assets/icons/camera.svg';
 import profileDefaultIcon from '@/assets/icons/profile-default.svg';
+import WithdrawConfirmOverlay from '@/components/My/WithdrawConfirmOverlay';
 import { ThemedText } from '@/components/global/themed-text';
 import { ThemedView } from '@/components/global/themed-view';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { useHideNavWhile } from '@/hooks/use-nav-visibility';
 
 // TODO: 실제 로그인한 사용자 정보로 교체.
 const initialUser = {
@@ -51,6 +55,18 @@ function InfoRow({ label, value, round, isLast, editable, onChangeValue }: InfoR
 export default function My() {
   const [isEditing, setIsEditing] = useState(false);
   const [form, setForm] = useState(initialUser);
+  const [showWithdrawConfirm, setShowWithdrawConfirm] = useState(false);
+  useHideNavWhile(showWithdrawConfirm);
+
+  const handleWithdraw = async () => {
+    try {
+      await withdraw();
+      setAccessToken(null);
+      router.replace('/login');
+    } catch {
+      // 탈퇴 실패 시 팝업을 그대로 두고 사용자가 다시 시도할 수 있게 함.
+    }
+  };
 
   const handleToggleEdit = () => {
     if (isEditing) {
@@ -116,11 +132,18 @@ export default function My() {
             <ThemedText className="text-gray-500">로그아웃</ThemedText>
           </TouchableOpacity>
           <View className="h-12 w-1 bg-gray-300" />
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => setShowWithdrawConfirm(true)}>
             <ThemedText className="text-gray-500">회원탈퇴</ThemedText>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
+
+      {showWithdrawConfirm && (
+        <WithdrawConfirmOverlay
+          onCancel={() => setShowWithdrawConfirm(false)}
+          onConfirm={handleWithdraw}
+        />
+      )}
     </ThemedView>
   );
 }

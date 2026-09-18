@@ -41,3 +41,7 @@ export async function checkUsernameAvailable(username: string) {
   });
   return data.available;
 }
+
+export async function withdraw() {
+  await apiClient.delete('/user');
+}
