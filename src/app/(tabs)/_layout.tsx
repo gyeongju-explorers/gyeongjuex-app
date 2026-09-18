@@ -2,12 +2,23 @@ import { Slot } from 'expo-router';
 import { View } from 'react-native';
 
 import Nav from '@/components/global/Nav';
+import { NavVisibilityProvider, useNavVisibility } from '@/hooks/use-nav-visibility';
 
-export default function TabsLayout() {
+function TabsContent() {
+  const { visible } = useNavVisibility();
+
   return (
     <View style={{ flex: 1 }}>
       <Slot />
-      <Nav />
+      {visible && <Nav />}
     </View>
+  );
+}
+
+export default function TabsLayout() {
+  return (
+    <NavVisibilityProvider>
+      <TabsContent />
+    </NavVisibilityProvider>
   );
 }
