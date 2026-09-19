@@ -1,5 +1,5 @@
 import { Asset } from 'expo-asset';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -99,6 +99,10 @@ export default function MissionMap() {
   const mapContainerRef = useRef<View>(null);
   const mapRef = useRef<any>(null);
   const markersRef = useRef<any[]>([]);
+  // 지도 스크립트/인스턴스 준비가 비동기라, 마커를 그리는 effect가 이 값을 의존성으로 잡아야
+  // "지도가 이제 막 준비됨" 시점에 다시 실행된다. mapRef.current만 보면 effect가 재실행될
+  // 계기가 없어 마커가 영원히 그려지지 않는다.
+  const [isMapReady, setIsMapReady] = useState(false);
 
   // 지도 인스턴스는 한 번만 생성.
   useEffect(() => {
@@ -122,6 +126,7 @@ export default function MissionMap() {
         center: new window.naver.maps.LatLng(GYEONGJU_CENTER.latitude, GYEONGJU_CENTER.longitude),
         zoom: 14,
       });
+      setIsMapReady(true);
 
       // RN Web의 flex 레이아웃이 안정되기 전에 지도가 만들어지면 컨테이너 크기를 0으로 잘못
       // 잡아서 타일이 뷰포트 밖으로 어긋난다. 다음 프레임에 사이즈를 다시 계산시켜 바로잡는다.
@@ -135,9 +140,9 @@ export default function MissionMap() {
     };
   }, []);
 
-  // 장소 목록/선택 상태가 바뀔 때마다 마커를 다시 그린다.
+  // 장소 목록/선택 상태가 바뀌거나 지도가 막 준비됐을 때 마커를 다시 그린다.
   useEffect(() => {
-    if (!mapRef.current || !window.naver?.maps) return;
+    if (!isMapReady || !mapRef.current || !window.naver?.maps) return;
 
     markersRef.current.forEach((marker) => marker.setMap(null));
     markersRef.current = filteredPlaces
@@ -159,7 +164,7 @@ export default function MissionMap() {
 
         return marker;
       });
-  }, [filteredPlaces, selectedPlaceId, setSelectedPlaceId, setViewingPhotoPlaceId]);
+  }, [isMapReady, filteredPlaces, selectedPlaceId, setSelectedPlaceId, setViewingPhotoPlaceId]);
 
   return (
     <ThemedView style={styles.container}>
@@ -177,7 +182,9 @@ export default function MissionMap() {
           />
         </View>
       </SafeAreaView>
-      {selectedPlace && <PlaceInfoModal place={selectedPlace} />}
+      {selectedPlace && (
+        <PlaceInfoModal place={selectedPlace} onClose={() => setSelectedPlaceId(null)} />
+      )}
       {viewingPhotoPlace && (
         <PhotoViewerOverlay
           // TODO: photo 테이블에서 실제 여러 장을 받아오도록 교체 — 지금은 폴백 장소(-1)에 테스트용 2장만 하드코딩.
