@@ -136,7 +136,9 @@ export default function MissionMap() {
           onOpenListModal={() => setIsListModalOpen(true)}
         />
       </SafeAreaView>
-      {selectedPlace && <PlaceInfoModal place={selectedPlace} />}
+      {selectedPlace && (
+        <PlaceInfoModal place={selectedPlace} onClose={() => setSelectedPlaceId(null)} />
+      )}
       {viewingPhotoPlace && (
         <PhotoViewerOverlay
           // TODO: photo 테이블에서 실제 여러 장을 받아오도록 교체 — 지금은 폴백 장소(-1)에 테스트용 2장만 하드코딩.
