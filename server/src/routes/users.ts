@@ -3,13 +3,19 @@ import { Router } from 'express';
 import type { ResultSetHeader, RowDataPacket } from 'mysql2';
 
 import { pool } from '../db.js';
+import { deletePhotosByUrl } from '../lib/s3.js';
 import { signAccessToken, signRefreshToken } from '../lib/tokens.js';
+import { type AuthedRequest, requireAuth } from '../middleware/auth.js';
 
 interface UserRow extends RowDataPacket {
   id: number;
   username: string;
   nickname: string;
   password_hash: string;
+}
+
+interface PhotoUrlRow extends RowDataPacket {
+  image_url: string;
 }
 
 const router = Router();
@@ -95,6 +101,44 @@ router.post('/login', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: '로그인에 실패했습니다.' });
+  }
+});
+
+// DELETE /user
+// 회원 탈퇴: 사용자가 소유한 사진/미션 완료 기록을 먼저 지우고 사용자 행을 삭제.
+router.delete('/', requireAuth, async (req: AuthedRequest, res) => {
+  const connection = await pool.getConnection();
+  let photoUrls: string[] = [];
+
+  try {
+    const [photoRows] = await connection.query<PhotoUrlRow[]>(
+      'SELECT image_url FROM photo WHERE user_id = ?',
+      [req.userId],
+    );
+    photoUrls = photoRows.map((row) => row.image_url);
+
+    await connection.beginTransaction();
+    await connection.query('DELETE FROM photo WHERE user_id = ?', [req.userId]);
+    await connection.query('DELETE FROM mission_completion WHERE user_id = ?', [req.userId]);
+    await connection.query('DELETE FROM user WHERE id = ?', [req.userId]);
+    await connection.commit();
+  } catch (err) {
+    await connection.rollback();
+    console.error(err);
+    res.status(500).json({ message: '회원 탈퇴에 실패했습니다.' });
+    return;
+  } finally {
+    connection.release();
+  }
+
+  res.status(204).send();
+
+  // S3 삭제는 트랜잭션으로 묶이지 않으므로 DB 삭제가 끝난 뒤 별도로 시도하고,
+  // 실패해도 이미 응답은 보낸 상태라 로그만 남긴다.
+  try {
+    await deletePhotosByUrl(photoUrls);
+  } catch (err) {
+    console.error('S3 사진 삭제 실패:', err);
   }
 });
 
