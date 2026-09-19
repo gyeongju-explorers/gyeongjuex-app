@@ -90,6 +90,7 @@ export default function MissionCamera() {
           currentTierTitle: result.currentTier?.title ?? '',
           nextTierTitle: result.nextTier?.title ?? '',
           missionsToNext: result.missionsToNext !== null ? String(result.missionsToNext) : '',
+          relatedPlaces: JSON.stringify(result.relatedPlaces),
         },
       };
     } catch (err) {
