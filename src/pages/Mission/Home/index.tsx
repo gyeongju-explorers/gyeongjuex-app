@@ -1,11 +1,13 @@
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Location from 'expo-location';
+import { Redirect } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { getNearbyPlaces, type Place } from '@/api/places';
+import { getAccessToken } from '@/api/session';
 import image2 from '@/assets/images/image2.png';
 import { ThemedText } from '@/components/global/themed-text';
 import { ThemedView } from '@/components/global/themed-view';
@@ -17,8 +19,11 @@ const NEARBY_PLACES_LIMIT = 5;
 
 export default function MissionHome() {
   const [nearbyPlaces, setNearbyPlaces] = useState<Place[]>([]);
+  const isLoggedIn = !!getAccessToken();
 
   useEffect(() => {
+    if (!isLoggedIn) return;
+
     Location.requestForegroundPermissionsAsync()
       .then(({ status }) => {
         if (status !== 'granted') return null;
@@ -38,7 +43,11 @@ export default function MissionHome() {
       .catch(() => {
         // 위치 권한 거부 등으로 실패해도 배너는 그대로 보여주고 목록만 비워둔다.
       });
-  }, []);
+  }, [isLoggedIn]);
+
+  if (!isLoggedIn) {
+    return <Redirect href="/login" />;
+  }
 
   return (
     <ThemedView style={styles.container}>
