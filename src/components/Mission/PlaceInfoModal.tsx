@@ -15,7 +15,7 @@ type PlaceInfoModalProps = {
 
 const PlaceInfoModal = ({ place, onClose }: PlaceInfoModalProps) => {
   return (
-    <View className="absolute inset-x-16 top-40 rounded-3xl bg-white p-21 gap-16 shadow">
+    <View className="absolute inset-x-16 top-70 rounded-3xl bg-white p-21 gap-16 shadow">
       <Pressable className="absolute right-8 top-8 p-8 z-10" onPress={onClose} hitSlop={8}>
         <Image source={closeIcon} className="w-20 h-20" />
       </Pressable>
@@ -25,7 +25,7 @@ const PlaceInfoModal = ({ place, onClose }: PlaceInfoModalProps) => {
           {/* title */}
           <ThemedText className="text-base font-bold">{place.name}</ThemedText>
           {/* location */}
-          <View className="flex-row items-center gap-4">
+          <View className="flex-row items-center gap-4 mb-12">
             <Image source={locationIcon} className="w-10 h-12" />
             <ThemedText className="text-gray-900 text-xs flex-1" numberOfLines={2}>
               {place.address}
