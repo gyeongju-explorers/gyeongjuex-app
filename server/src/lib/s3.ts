@@ -10,29 +10,45 @@ const publicBaseUrl = process.env.AWS_S3_PUBLIC_BASE_URL;
 
 const s3Client = new S3Client({ region });
 
-export async function uploadMissionPhoto(params: {
-  userId: number;
-  placeId: number;
-  buffer: Buffer;
-  contentType: string;
-}): Promise<string> {
+async function uploadPhoto(key: string, buffer: Buffer, contentType: string): Promise<string> {
   if (!bucket) {
     throw new Error('AWS_S3_BUCKET 환경변수가 설정되지 않았습니다.');
   }
-
-  const extension = params.contentType === 'image/png' ? 'png' : 'jpg';
-  const key = `missions/${params.userId}/${params.placeId}/${Date.now()}-${randomUUID()}.${extension}`;
 
   await s3Client.send(
     new PutObjectCommand({
       Bucket: bucket,
       Key: key,
-      Body: params.buffer,
-      ContentType: params.contentType,
+      Body: buffer,
+      ContentType: contentType,
     }),
   );
 
   return publicBaseUrl
     ? `${publicBaseUrl.replace(/\/$/, '')}/${key}`
     : `https://${bucket}.s3.${region}.amazonaws.com/${key}`;
+}
+
+function extensionFor(contentType: string) {
+  return contentType === 'image/png' ? 'png' : 'jpg';
+}
+
+export async function uploadMissionPhoto(params: {
+  userId: number;
+  placeId: number;
+  buffer: Buffer;
+  contentType: string;
+}): Promise<string> {
+  const key = `missions/${params.userId}/${params.placeId}/${Date.now()}-${randomUUID()}.${extensionFor(params.contentType)}`;
+  return uploadPhoto(key, params.buffer, params.contentType);
+}
+
+// 미션(장소)에 묶이지 않는 일반 카메라 사진.
+export async function uploadGeneralPhoto(params: {
+  userId: number;
+  buffer: Buffer;
+  contentType: string;
+}): Promise<string> {
+  const key = `general/${params.userId}/${Date.now()}-${randomUUID()}.${extensionFor(params.contentType)}`;
+  return uploadPhoto(key, params.buffer, params.contentType);
 }

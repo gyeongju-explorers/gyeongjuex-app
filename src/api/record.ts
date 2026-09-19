@@ -17,12 +17,10 @@ export async function getRecordSummary() {
   return data;
 }
 
-export async function uploadGeneralPhoto(params: {
-  placeId: number;
-  photoUri: string;
-}): Promise<{ photoUrl: string }> {
+export async function uploadGeneralPhoto(params: { photoUri: string }): Promise<{
+  photoUrl: string;
+}> {
   const formData = new FormData();
-  formData.append('placeId', String(params.placeId));
   // React Native의 FormData는 { uri, name, type } 형태를 파일로 취급한다.
   formData.append('photo', {
     uri: params.photoUri,

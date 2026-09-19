@@ -2,23 +2,28 @@ import { Image, type ImageSource } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useMemo, useRef, useState } from 'react';
 import {
-    Dimensions,
-    Platform,
-    StyleSheet,
-    View,
-    type LayoutChangeEvent,
-    type NativeScrollEvent,
-    type NativeSyntheticEvent,
+  Dimensions,
+  Platform,
+  StyleSheet,
+  View,
+  type LayoutChangeEvent,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
 } from 'react-native';
 import Animated, {
-    Extrapolation,
-    clamp,
-    interpolate,
-    useAnimatedScrollHandler,
-    useAnimatedStyle,
-    useSharedValue,
-    type SharedValue,
+  Extrapolation,
+  clamp,
+  interpolate,
+  runOnJS,
+  useAnimatedReaction,
+  useAnimatedScrollHandler,
+  useAnimatedStyle,
+  useSharedValue,
+  type SharedValue,
 } from 'react-native-reanimated';
+
+import type { Place } from '@/api/places';
+
 import HomeButton from './HomeButton';
 import MissionButton from './MissionButton';
 import MissionListButton from './MissionListButton';
@@ -45,6 +50,9 @@ type PhotoSource = ImageSource | number;
 
 type MissionSlideProps = {
   photos: PhotoSource[];
+  // 같은 순서/길이로 photos와 짝지어지는 장소 목록 — 가운데(선택된) 카드의 PICK 버튼이
+  // 어느 장소로 이동해야 하는지 알아내는 데 쓴다.
+  places: Place[];
   onOpenListModal: () => void;
 };
 
@@ -99,7 +107,7 @@ const ArcCard = ({ source, index, scrollX, screenWidth }: ArcCardProps) => {
   );
 };
 
-const MissionSlide = ({ photos, onOpenListModal }: MissionSlideProps) => {
+const MissionSlide = ({ photos, places, onOpenListModal }: MissionSlideProps) => {
   // On web behind WebFrame's centered phone frame, the browser window is wider than this
   // component's own box — arc math must use the box's own width, not the window's.
   const [screenWidth, setScreenWidth] = useState(INITIAL_WIDTH);
@@ -154,6 +162,30 @@ const MissionSlide = ({ photos, onOpenListModal }: MissionSlideProps) => {
   const scrollHandler = useAnimatedScrollHandler((event) => {
     scrollX.value = event.contentOffset.x;
   });
+
+  // Extended (tripled) index -> real index into `photos`/`places`, unwrapping the loop copies.
+  const [centeredIndex, setCenteredIndex] = useState(0);
+  useAnimatedReaction(
+    () => Math.round(scrollX.value / ITEM_SPACING),
+    (rawIndex, previousRawIndex) => {
+      if (rawIndex === previousRawIndex) return;
+      const realIndex = loopEnabled ? ((rawIndex % baseCount) + baseCount) % baseCount : rawIndex;
+      runOnJS(setCenteredIndex)(realIndex);
+    },
+  );
+  const centeredPlace = places[centeredIndex];
+  const missionHref = centeredPlace
+    ? {
+        pathname: '/mission/camera' as const,
+        params: {
+          placeId: String(centeredPlace.id),
+          image: centeredPlace.image ?? '',
+          name: centeredPlace.name,
+          latitude: centeredPlace.latitude !== null ? String(centeredPlace.latitude) : '',
+          longitude: centeredPlace.longitude !== null ? String(centeredPlace.longitude) : '',
+        },
+      }
+    : undefined;
 
   // Belt-and-suspenders: snapToInterval alone can settle short of the nearest
   // card (Android in particular), so force-snap to the closest index whenever
@@ -248,7 +280,7 @@ const MissionSlide = ({ photos, onOpenListModal }: MissionSlideProps) => {
       </View>
       <View className="absolute inset-x-0 bottom-40 items-center">
         <View className="items-center">
-          <MissionButton text="PICK !" />
+          <MissionButton text="PICK !" href={missionHref} />
           <View className="absolute right-full mr-20">
             <HomeButton />
           </View>

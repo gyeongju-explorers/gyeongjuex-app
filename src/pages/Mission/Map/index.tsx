@@ -124,6 +124,7 @@ export default function MissionMap() {
           <MissionSlide
             key={selectablePlaces.map((place) => place.id).join(',')}
             photos={slidePhotos}
+            places={selectablePlaces}
             onOpenListModal={() => setIsListModalOpen(true)}
           />
         )}

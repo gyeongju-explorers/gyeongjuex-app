@@ -42,9 +42,8 @@ export const Spacing = {
 export const BottomTabInset = Platform.select({ ios: 50, android: 80 }) ?? 0;
 export const MaxContentWidth = 800;
 
-// 웹에서 창 너비가 이 값을 넘으면 프레임 모드로 전환한다 (이 값 이하에서는 지금처럼
-// 풀 너비 모바일 레이아웃 그대로).
-export const WebFrameBreakpoint = 600;
-// 프레임 모드에서 실제로 화면이 고정되는 폭 — 큰 폰(iPhone Pro Max 기준) 비율에 맞춘 값.
-// 나머지 여백은 web-background.png로 채운다.
+// 실제 모바일 화면처럼 보이도록 웹 WebFrame이 고정하려는 폭 (큰 폰 기준). 창 너비가
+// 이보다 넓으면 콘텐츠를 이 폭으로 고정하고 남는 양옆을 배경 이미지로 채우며, 창을
+// 좁힐수록 그 여백이 그대로 줄어든다. 창 너비가 이 값 이하로 내려가면 배경 없이 창
+// 너비 그대로 꽉 채운다.
 export const WebFrameWidth = 430;
