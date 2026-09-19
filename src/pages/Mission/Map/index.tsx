@@ -1,7 +1,7 @@
 import { NaverMapMarkerOverlay, NaverMapView } from '@mj-studio/react-native-naver-map';
 import { Image } from 'expo-image';
 import * as Location from 'expo-location';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -10,7 +10,6 @@ import image1 from '@/assets/images/image1.png';
 import image2 from '@/assets/images/image2.png';
 import { ThemedView } from '@/components/global/themed-view';
 import Marker from '@/components/Mission/Marker';
-import type { MissionCardProps } from '@/components/Mission/MissionCard';
 import MissionChipList from '@/components/Mission/MissionChipList';
 import MissionListModal from '@/components/Mission/MissionListModal';
 import MissionSlide from '@/components/Mission/MissionSlide';
@@ -21,26 +20,12 @@ import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 
 import { useMissionMapData } from './useMissionMapData';
 
-const MISSIONS: MissionCardProps[] = [
-  {
-    photos: [image1, image2, image1, image1, image2, image1],
-    title: '첨성대',
-    description: '경주 첨성대 일대',
-  },
-  { photos: [image2, image1], title: '동궁과 월지', description: '경주 동궁과 월지 일대' },
-  {
-    photos: [image1, image2, image1, image1, image2, image1],
-    title: '첨성대',
-    description: '경주 첨성대 일대',
-  },
-  { photos: [image2, image1], title: '동궁과 월지', description: '경주 동궁과 월지 일대' },
-];
-
 const GYEONGJU_CENTER = { latitude: 35.8354, longitude: 129.2194 };
 
 export default function MissionMap() {
   const {
     filteredPlaces,
+    selectablePlaces,
     selectedCategory,
     setSelectedCategory,
     selectedPlaceId,
@@ -53,6 +38,10 @@ export default function MissionMap() {
   } = useMissionMapData();
   const [myLocation, setMyLocation] = useState<{ latitude: number; longitude: number } | null>(
     null,
+  );
+  const slidePhotos = useMemo(
+    () => selectablePlaces.map((place) => (place.image ? { uri: place.image } : image1)),
+    [selectablePlaces],
   );
 
   useEffect(() => {
@@ -131,10 +120,13 @@ export default function MissionMap() {
             onSelectCategory={setSelectedCategory}
           />
         </View>
-        <MissionSlide
-          photos={[image1, image2, image1, image2, image1, image2, image1, image2]}
-          onOpenListModal={() => setIsListModalOpen(true)}
-        />
+        {slidePhotos.length > 0 && (
+          <MissionSlide
+            key={selectablePlaces.map((place) => place.id).join(',')}
+            photos={slidePhotos}
+            onOpenListModal={() => setIsListModalOpen(true)}
+          />
+        )}
       </SafeAreaView>
       {selectedPlace && (
         <PlaceInfoModal place={selectedPlace} onClose={() => setSelectedPlaceId(null)} />
@@ -153,7 +145,8 @@ export default function MissionMap() {
       <MissionListModal
         visible={isListModalOpen}
         onClose={() => setIsListModalOpen(false)}
-        missions={MISSIONS}
+        missions={selectablePlaces}
+        selectedCategory={selectedCategory}
       />
     </ThemedView>
   );

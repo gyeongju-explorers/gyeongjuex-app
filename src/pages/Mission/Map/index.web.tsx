@@ -1,5 +1,5 @@
 import { Asset } from 'expo-asset';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -8,9 +8,9 @@ import markerInactiveIcon from '@/assets/icons/marker-inactive.svg';
 import markerSelectedIcon from '@/assets/icons/marker-selected.svg';
 import { default as image1, default as image2 } from '@/assets/images/image2.png';
 import { ThemedView } from '@/components/global/themed-view';
-import type { MissionCardProps } from '@/components/Mission/MissionCard';
 import MissionChipList from '@/components/Mission/MissionChipList';
 import MissionListModal from '@/components/Mission/MissionListModal';
+import MissionSlide from '@/components/Mission/MissionSlide';
 import PhotoViewerOverlay from '@/components/Mission/PhotoViewerOverlay';
 import PlaceInfoModal from '@/components/Mission/PlaceInfoModal';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
@@ -22,15 +22,6 @@ declare global {
     naver: any;
   }
 }
-
-const MISSIONS: MissionCardProps[] = [
-  {
-    photos: [image1, image2, image1, image1, image2, image1],
-    title: '첨성대',
-    description: '경주 첨성대 일대',
-  },
-  { photos: [image2, image1], title: '동궁과 월지', description: '경주 동궁과 월지 일대' },
-];
 
 const GYEONGJU_CENTER = { latitude: 35.8354, longitude: 129.2194 };
 const NAVER_MAPS_SCRIPT_ID = 'naver-maps-web-sdk';
@@ -85,6 +76,7 @@ function buildMarkerIcon(place: Place, isSelected: boolean) {
 export default function MissionMap() {
   const {
     filteredPlaces,
+    selectablePlaces,
     selectedCategory,
     setSelectedCategory,
     selectedPlaceId,
@@ -99,6 +91,10 @@ export default function MissionMap() {
   const mapContainerRef = useRef<View>(null);
   const mapRef = useRef<any>(null);
   const markersRef = useRef<any[]>([]);
+  const slidePhotos = useMemo(
+    () => selectablePlaces.map((place) => (place.image ? { uri: place.image } : image1)),
+    [selectablePlaces],
+  );
   // 지도 스크립트/인스턴스 준비가 비동기라, 마커를 그리는 effect가 이 값을 의존성으로 잡아야
   // "지도가 이제 막 준비됨" 시점에 다시 실행된다. mapRef.current만 보면 effect가 재실행될
   // 계기가 없어 마커가 영원히 그려지지 않는다.
@@ -181,6 +177,13 @@ export default function MissionMap() {
             onSelectCategory={setSelectedCategory}
           />
         </View>
+        {slidePhotos.length > 0 && (
+          <MissionSlide
+            key={selectablePlaces.map((place) => place.id).join(',')}
+            photos={slidePhotos}
+            onOpenListModal={() => setIsListModalOpen(true)}
+          />
+        )}
       </SafeAreaView>
       {selectedPlace && (
         <PlaceInfoModal place={selectedPlace} onClose={() => setSelectedPlaceId(null)} />
@@ -199,7 +202,8 @@ export default function MissionMap() {
       <MissionListModal
         visible={isListModalOpen}
         onClose={() => setIsListModalOpen(false)}
-        missions={MISSIONS}
+        missions={selectablePlaces}
+        selectedCategory={selectedCategory}
       />
     </ThemedView>
   );
