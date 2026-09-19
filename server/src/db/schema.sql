@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS place (
   name VARCHAR(255) NOT NULL,
   address VARCHAR(255) NOT NULL,
   image VARCHAR(500),
+  image_credit VARCHAR(255),
   category VARCHAR(100),
   latitude DECIMAL(10, 7),
   longitude DECIMAL(10, 7),

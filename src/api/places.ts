@@ -7,6 +7,7 @@ export type Place = {
   name: string;
   address: string;
   image: string | null;
+  imageCredit: string | null;
   category: PlaceCategory | null;
   latitude: number | null;
   longitude: number | null;
