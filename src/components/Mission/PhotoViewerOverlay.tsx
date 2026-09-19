@@ -1,13 +1,21 @@
 import { Image, type ImageSource } from 'expo-image';
-import { Dimensions, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { useState } from 'react';
+import {
+    Dimensions,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    View,
+    type LayoutChangeEvent,
+} from 'react-native';
 
 import closeMarkerIcon from '@/assets/icons/close-marker.svg';
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
-const PHOTO_WIDTH = SCREEN_WIDTH * 0.75;
-const PHOTO_HEIGHT = PHOTO_WIDTH * 1.3;
+// Fallback used only before this overlay's own container has been measured — on native,
+// and on web outside the WebFrame breakpoint, this already equals the container size.
+const { width: INITIAL_WIDTH, height: INITIAL_HEIGHT } = Dimensions.get('window');
+
 const PHOTO_GAP = 16;
-const SIDE_PADDING = (SCREEN_WIDTH - PHOTO_WIDTH) / 2;
 const CLOSE_BUTTON_SIZE = 44;
 
 type PhotoSource = ImageSource | number;
@@ -18,8 +26,20 @@ type PhotoViewerOverlayProps = {
 };
 
 const PhotoViewerOverlay = ({ photos, onClose }: PhotoViewerOverlayProps) => {
+  // On web behind WebFrame's centered phone frame, the browser window is wider than this
+  // overlay's own box — photo sizing must use the box's own size, not the window's.
+  const [size, setSize] = useState({ width: INITIAL_WIDTH, height: INITIAL_HEIGHT });
+  const handleLayout = (event: LayoutChangeEvent) => {
+    const { width, height } = event.nativeEvent.layout;
+    setSize({ width, height });
+  };
+
+  const photoWidth = size.width * 0.75;
+  const photoHeight = photoWidth * 1.3;
+  const sidePadding = (size.width - photoWidth) / 2;
+
   return (
-    <View style={styles.dim}>
+    <View style={styles.dim} onLayout={handleLayout}>
       {/* 배경 전체를 덮는 닫기 레이어 — 스크롤 영역이 위에 그려져 이 레이어를 가려주므로
           별도 stopPropagation 없이도 사진 위에서는 눌리지 않는다. */}
       <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
@@ -27,14 +47,14 @@ const PhotoViewerOverlay = ({ photos, onClose }: PhotoViewerOverlayProps) => {
           사진 1장 너비로 좁게 잡으면 그 박스 자체가 뷰포트라 옆 사진이 원천적으로 안 보임. */}
       <ScrollView
         horizontal
-        style={{ width: SCREEN_WIDTH, flexGrow: 0, zIndex: 1 }}
+        style={{ width: size.width, flexGrow: 0, zIndex: 1 }}
         contentContainerStyle={{
-          paddingHorizontal: SIDE_PADDING,
+          paddingHorizontal: sidePadding,
           alignItems: 'center',
           gap: PHOTO_GAP,
         }}
         showsHorizontalScrollIndicator={false}
-        snapToInterval={PHOTO_WIDTH + PHOTO_GAP}
+        snapToInterval={photoWidth + PHOTO_GAP}
         snapToAlignment="start"
         decelerationRate="fast"
       >
@@ -42,7 +62,7 @@ const PhotoViewerOverlay = ({ photos, onClose }: PhotoViewerOverlayProps) => {
           <Image
             key={index}
             source={photo}
-            style={{ width: PHOTO_WIDTH, height: PHOTO_HEIGHT }}
+            style={{ width: photoWidth, height: photoHeight }}
             className="border-[12px] border-white rounded-[64px]"
           />
         ))}
@@ -52,8 +72,8 @@ const PhotoViewerOverlay = ({ photos, onClose }: PhotoViewerOverlayProps) => {
         style={{
           position: 'absolute',
           zIndex: 2,
-          top: (SCREEN_HEIGHT - PHOTO_HEIGHT) / 2 - CLOSE_BUTTON_SIZE / 2 - 24,
-          left: SCREEN_WIDTH / 2 + PHOTO_WIDTH / 2 - CLOSE_BUTTON_SIZE / 2 - 12,
+          top: (size.height - photoHeight) / 2 - CLOSE_BUTTON_SIZE / 2 - 24,
+          left: size.width / 2 + photoWidth / 2 - CLOSE_BUTTON_SIZE / 2 - 12,
         }}
       >
         <Image

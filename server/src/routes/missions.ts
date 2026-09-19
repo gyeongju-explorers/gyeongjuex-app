@@ -5,6 +5,7 @@ import type { RowDataPacket } from 'mysql2';
 import { pool } from '../db.js';
 import { computeGradeProgress } from '../lib/gradeTiers.js';
 import { uploadMissionPhoto } from '../lib/s3.js';
+import { getRelatedTouristSpots } from '../lib/tourApi.js';
 import { type AuthedRequest, requireAuth } from '../middleware/auth.js';
 
 const router = Router();
@@ -115,10 +116,12 @@ router.post(
         [req.userId],
       );
       const gradeProgress = computeGradeProgress(countRows[0]?.count ?? 0);
+      const relatedPlaces = await getRelatedTouristSpots(place.name);
 
       res.status(201).json({
         placeName: place.name,
         photoUrl,
+        relatedPlaces,
         ...gradeProgress,
       });
     } catch (err) {

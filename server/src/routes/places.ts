@@ -9,6 +9,7 @@ interface PlaceRow extends RowDataPacket {
   name: string;
   address: string;
   image: string | null;
+  image_credit: string | null;
   category: string | null;
   latitude: number | null;
   longitude: number | null;
@@ -24,6 +25,7 @@ interface PlaceDetailRow extends RowDataPacket {
   name: string;
   address: string;
   image: string | null;
+  image_credit: string | null;
   is_completed: number;
 }
 
@@ -52,7 +54,7 @@ router.get('/places', requireAuth, async (req: AuthedRequest, res) => {
   try {
     const [rows] = hasLocation
       ? await pool.query<PlaceWithCompletionRow[]>(
-          `SELECT p.id, p.name, p.address, p.image, p.category, p.latitude, p.longitude,
+          `SELECT p.id, p.name, p.address, p.image, p.image_credit, p.category, p.latitude, p.longitude,
                   ${DISTANCE_KM_EXPR} AS distance_km,
                   (mc.id IS NOT NULL) AS is_completed
            FROM place p
@@ -61,7 +63,7 @@ router.get('/places', requireAuth, async (req: AuthedRequest, res) => {
           [lat, lng, lat, req.userId]
         )
       : await pool.query<PlaceWithCompletionRow[]>(
-          `SELECT p.id, p.name, p.address, p.image, p.category, p.latitude, p.longitude,
+          `SELECT p.id, p.name, p.address, p.image, p.image_credit, p.category, p.latitude, p.longitude,
                   NULL AS distance_km,
                   (mc.id IS NOT NULL) AS is_completed
            FROM place p
@@ -75,6 +77,7 @@ router.get('/places', requireAuth, async (req: AuthedRequest, res) => {
       name: row.name,
       address: row.address,
       image: row.image,
+      imageCredit: row.image_credit,
       category: row.category,
       latitude: row.latitude,
       longitude: row.longitude,
@@ -104,7 +107,7 @@ router.get('/places/nearby', requireAuth, async (req: AuthedRequest, res) => {
 
   try {
     const [rows] = await pool.query<PlaceWithCompletionRow[]>(
-      `SELECT p.id, p.name, p.address, p.image, p.category, p.latitude, p.longitude,
+      `SELECT p.id, p.name, p.address, p.image, p.image_credit, p.category, p.latitude, p.longitude,
               ${DISTANCE_KM_EXPR} AS distance_km,
               (mc.id IS NOT NULL) AS is_completed
        FROM place p
@@ -120,6 +123,7 @@ router.get('/places/nearby', requireAuth, async (req: AuthedRequest, res) => {
       name: row.name,
       address: row.address,
       image: row.image,
+      imageCredit: row.image_credit,
       category: row.category,
       latitude: row.latitude,
       longitude: row.longitude,
@@ -143,7 +147,7 @@ router.get('/places/completed', requireAuth, async (req: AuthedRequest, res) => 
   try {
     const [rows] = hasLocation
       ? await pool.query<PlaceWithCompletionRow[]>(
-          `SELECT p.id, p.name, p.address, p.image, p.category, p.latitude, p.longitude,
+          `SELECT p.id, p.name, p.address, p.image, p.image_credit, p.category, p.latitude, p.longitude,
                   ${DISTANCE_KM_EXPR} AS distance_km,
                   1 AS is_completed
            FROM place p
@@ -152,7 +156,7 @@ router.get('/places/completed', requireAuth, async (req: AuthedRequest, res) => 
           [lat, lng, lat, req.userId]
         )
       : await pool.query<PlaceWithCompletionRow[]>(
-          `SELECT p.id, p.name, p.address, p.image, p.category, p.latitude, p.longitude,
+          `SELECT p.id, p.name, p.address, p.image, p.image_credit, p.category, p.latitude, p.longitude,
                   NULL AS distance_km,
                   1 AS is_completed
            FROM place p
@@ -166,6 +170,7 @@ router.get('/places/completed', requireAuth, async (req: AuthedRequest, res) => 
       name: row.name,
       address: row.address,
       image: row.image,
+      imageCredit: row.image_credit,
       category: row.category,
       latitude: row.latitude,
       longitude: row.longitude,
@@ -190,7 +195,7 @@ router.get('/places/:id', requireAuth, async (req: AuthedRequest, res) => {
 
   try {
     const [rows] = await pool.query<PlaceDetailRow[]>(
-      `SELECT p.id, p.name, p.address, p.image,
+      `SELECT p.id, p.name, p.address, p.image, p.image_credit,
               (mc.id IS NOT NULL) AS is_completed
        FROM place p
        LEFT JOIN mission_completion mc ON mc.place_id = p.id AND mc.user_id = ?
@@ -209,6 +214,7 @@ router.get('/places/:id', requireAuth, async (req: AuthedRequest, res) => {
       name: place.name,
       address: place.address,
       images: place.image ? [place.image] : [],
+      imageCredit: place.image_credit,
       isCompleted: Boolean(place.is_completed),
     });
   } catch (err) {

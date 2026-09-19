@@ -1,16 +1,19 @@
 import { Asset } from 'expo-asset';
-import { useEffect, useRef } from 'react';
+import * as Location from 'expo-location';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import type { Place } from '@/api/places';
+import markerActiveIcon from '@/assets/icons/marker-active.svg';
 import markerInactiveIcon from '@/assets/icons/marker-inactive.svg';
 import markerSelectedIcon from '@/assets/icons/marker-selected.svg';
+import myLocationIcon from '@/assets/icons/my-location.svg';
 import { default as image1, default as image2 } from '@/assets/images/image2.png';
 import { ThemedView } from '@/components/global/themed-view';
-import type { MissionCardProps } from '@/components/Mission/MissionCard';
 import MissionChipList from '@/components/Mission/MissionChipList';
 import MissionListModal from '@/components/Mission/MissionListModal';
+import MissionSlide from '@/components/Mission/MissionSlide';
 import PhotoViewerOverlay from '@/components/Mission/PhotoViewerOverlay';
 import PlaceInfoModal from '@/components/Mission/PlaceInfoModal';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
@@ -22,15 +25,6 @@ declare global {
     naver: any;
   }
 }
-
-const MISSIONS: MissionCardProps[] = [
-  {
-    photos: [image1, image2, image1, image1, image2, image1],
-    title: '첨성대',
-    description: '경주 첨성대 일대',
-  },
-  { photos: [image2, image1], title: '동궁과 월지', description: '경주 동궁과 월지 일대' },
-];
 
 const GYEONGJU_CENTER = { latitude: 35.8354, longitude: 129.2194 };
 const NAVER_MAPS_SCRIPT_ID = 'naver-maps-web-sdk';
@@ -61,14 +55,31 @@ function loadNaverMapsScript(clientId: string): Promise<void> {
   return scriptLoadPromise;
 }
 
-// 완료한 장소는 대표 사진을, 미완료 장소는 기존 마커 아이콘을 그대로 재사용해 HTML 오버레이로 그린다.
+// 완료한 장소의 사진 마커 크기 — PhotoMarker.tsx(네이티브)와 같은 크기로 사진 아래에
+// 핀 아이콘이 살짝 겹치도록 배치한다.
+const COMPLETED_PHOTO_WIDTH = 77;
+const COMPLETED_PHOTO_HEIGHT = 104;
+const COMPLETED_PIN_SIZE = 30;
+const COMPLETED_PIN_OVERLAP = 14;
+
+// 완료한 장소는 대표 사진 + 핀 아이콘을, 미완료 장소는 기존 마커 아이콘을 그대로 재사용해
+// HTML 오버레이로 그린다.
 function buildMarkerIcon(place: Place, isSelected: boolean) {
   if (place.isCompleted) {
     const photoUrl = place.image ?? Asset.fromModule(image1).uri;
+    const pinUri = Asset.fromModule(markerActiveIcon).uri;
+    const pinTop = COMPLETED_PHOTO_HEIGHT - COMPLETED_PIN_OVERLAP;
+    const totalHeight = pinTop + COMPLETED_PIN_SIZE;
     return {
-      content: `<div style="width:56px;height:74px;border-radius:14px;border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.25);background:#ddd center/cover no-repeat url('${photoUrl}')"></div>`,
-      size: new window.naver.maps.Size(56, 74),
-      anchor: new window.naver.maps.Point(28, 74),
+      content: `<div style="position:relative;width:${COMPLETED_PHOTO_WIDTH}px;height:${totalHeight}px;">
+        <div style="position:absolute;top:0;left:0;width:${COMPLETED_PHOTO_WIDTH}px;height:${COMPLETED_PHOTO_HEIGHT}px;border-radius:14px;border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.25);background:#ddd center/cover no-repeat url('${photoUrl}')"></div>
+        <img src="${pinUri}" style="position:absolute;top:${pinTop}px;left:50%;transform:translateX(-50%);width:${COMPLETED_PIN_SIZE}px;height:${COMPLETED_PIN_SIZE}px;" />
+      </div>`,
+      size: new window.naver.maps.Size(COMPLETED_PHOTO_WIDTH, totalHeight),
+      anchor: new window.naver.maps.Point(
+        COMPLETED_PHOTO_WIDTH / 2,
+        pinTop + COMPLETED_PIN_SIZE / 2,
+      ),
     };
   }
 
@@ -85,6 +96,7 @@ function buildMarkerIcon(place: Place, isSelected: boolean) {
 export default function MissionMap() {
   const {
     filteredPlaces,
+    selectablePlaces,
     selectedCategory,
     setSelectedCategory,
     selectedPlaceId,
@@ -99,6 +111,18 @@ export default function MissionMap() {
   const mapContainerRef = useRef<View>(null);
   const mapRef = useRef<any>(null);
   const markersRef = useRef<any[]>([]);
+  const myLocationMarkerRef = useRef<any>(null);
+  const [myLocation, setMyLocation] = useState<{ latitude: number; longitude: number } | null>(
+    null,
+  );
+  const slidePhotos = useMemo(
+    () => selectablePlaces.map((place) => (place.image ? { uri: place.image } : image1)),
+    [selectablePlaces],
+  );
+  // 지도 스크립트/인스턴스 준비가 비동기라, 마커를 그리는 effect가 이 값을 의존성으로 잡아야
+  // "지도가 이제 막 준비됨" 시점에 다시 실행된다. mapRef.current만 보면 effect가 재실행될
+  // 계기가 없어 마커가 영원히 그려지지 않는다.
+  const [isMapReady, setIsMapReady] = useState(false);
 
   // 지도 인스턴스는 한 번만 생성.
   useEffect(() => {
@@ -122,6 +146,7 @@ export default function MissionMap() {
         center: new window.naver.maps.LatLng(GYEONGJU_CENTER.latitude, GYEONGJU_CENTER.longitude),
         zoom: 14,
       });
+      setIsMapReady(true);
 
       // RN Web의 flex 레이아웃이 안정되기 전에 지도가 만들어지면 컨테이너 크기를 0으로 잘못
       // 잡아서 타일이 뷰포트 밖으로 어긋난다. 다음 프레임에 사이즈를 다시 계산시켜 바로잡는다.
@@ -135,9 +160,56 @@ export default function MissionMap() {
     };
   }, []);
 
-  // 장소 목록/선택 상태가 바뀔 때마다 마커를 다시 그린다.
   useEffect(() => {
-    if (!mapRef.current || !window.naver?.maps) return;
+    let subscription: Location.LocationSubscription | null = null;
+
+    Location.requestForegroundPermissionsAsync()
+      .then(({ status }) => {
+        if (status !== 'granted') return;
+
+        return Location.watchPositionAsync({ accuracy: Location.Accuracy.Balanced }, (location) => {
+          setMyLocation({
+            latitude: location.coords.latitude,
+            longitude: location.coords.longitude,
+          });
+        }).then((sub) => {
+          subscription = sub;
+        });
+      })
+      .catch(() => {
+        // 위치 접근 실패(권한 거부, 위치 설정 꺼짐 등) — 내 위치 마커 없이 진행.
+      });
+
+    return () => subscription?.remove();
+  }, []);
+
+  // 내 위치 마커는 장소 마커와 달리 좌표가 바뀔 때마다 다시 만들 필요 없이 위치만 갱신한다.
+  useEffect(() => {
+    if (!isMapReady || !myLocation || !mapRef.current || !window.naver?.maps) return;
+
+    const position = new window.naver.maps.LatLng(myLocation.latitude, myLocation.longitude);
+
+    if (myLocationMarkerRef.current) {
+      myLocationMarkerRef.current.setPosition(position);
+      return;
+    }
+
+    myLocationMarkerRef.current = new window.naver.maps.Marker({
+      position,
+      map: mapRef.current,
+      icon: {
+        url: Asset.fromModule(myLocationIcon).uri,
+        size: new window.naver.maps.Size(32, 32),
+        scaledSize: new window.naver.maps.Size(32, 32),
+        anchor: new window.naver.maps.Point(16, 16),
+      },
+      zIndex: 200,
+    });
+  }, [isMapReady, myLocation]);
+
+  // 장소 목록/선택 상태가 바뀌거나 지도가 막 준비됐을 때 마커를 다시 그린다.
+  useEffect(() => {
+    if (!isMapReady || !mapRef.current || !window.naver?.maps) return;
 
     markersRef.current.forEach((marker) => marker.setMap(null));
     markersRef.current = filteredPlaces
@@ -159,7 +231,7 @@ export default function MissionMap() {
 
         return marker;
       });
-  }, [filteredPlaces, selectedPlaceId, setSelectedPlaceId, setViewingPhotoPlaceId]);
+  }, [isMapReady, filteredPlaces, selectedPlaceId, setSelectedPlaceId, setViewingPhotoPlaceId]);
 
   return (
     <ThemedView style={styles.container}>
@@ -176,8 +248,18 @@ export default function MissionMap() {
             onSelectCategory={setSelectedCategory}
           />
         </View>
+        {slidePhotos.length > 0 && (
+          <MissionSlide
+            key={selectablePlaces.map((place) => place.id).join(',')}
+            photos={slidePhotos}
+            places={selectablePlaces}
+            onOpenListModal={() => setIsListModalOpen(true)}
+          />
+        )}
       </SafeAreaView>
-      {selectedPlace && <PlaceInfoModal place={selectedPlace} />}
+      {selectedPlace && (
+        <PlaceInfoModal place={selectedPlace} onClose={() => setSelectedPlaceId(null)} />
+      )}
       {viewingPhotoPlace && (
         <PhotoViewerOverlay
           // TODO: photo 테이블에서 실제 여러 장을 받아오도록 교체 — 지금은 폴백 장소(-1)에 테스트용 2장만 하드코딩.
@@ -192,7 +274,8 @@ export default function MissionMap() {
       <MissionListModal
         visible={isListModalOpen}
         onClose={() => setIsListModalOpen(false)}
-        missions={MISSIONS}
+        missions={selectablePlaces}
+        selectedCategory={selectedCategory}
       />
     </ThemedView>
   );

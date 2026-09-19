@@ -128,7 +128,12 @@ export default function My() {
         </View>
 
         <View className="flex-row items-center justify-center gap-57 pb-[132px]">
-          <TouchableOpacity onPress={() => router.replace('/login')}>
+          <TouchableOpacity
+            onPress={() => {
+              setAccessToken(null);
+              router.replace('/login');
+            }}
+          >
             <ThemedText className="text-gray-500">로그아웃</ThemedText>
           </TouchableOpacity>
           <View className="h-12 w-1 bg-gray-300" />

@@ -1,27 +1,36 @@
 import { Image, type ImageSource } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRef } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import {
-    Dimensions,
-    StyleSheet,
-    View,
-    type NativeScrollEvent,
-    type NativeSyntheticEvent,
+  Dimensions,
+  Platform,
+  StyleSheet,
+  View,
+  type LayoutChangeEvent,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
 } from 'react-native';
 import Animated, {
-    Extrapolation,
-    clamp,
-    interpolate,
-    useAnimatedScrollHandler,
-    useAnimatedStyle,
-    useSharedValue,
-    type SharedValue,
+  Extrapolation,
+  clamp,
+  interpolate,
+  runOnJS,
+  useAnimatedReaction,
+  useAnimatedScrollHandler,
+  useAnimatedStyle,
+  useSharedValue,
+  type SharedValue,
 } from 'react-native-reanimated';
+
+import type { Place } from '@/api/places';
+
 import HomeButton from './HomeButton';
 import MissionButton from './MissionButton';
 import MissionListButton from './MissionListButton';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+// Fallback used only before the slide's own container has been measured — on native,
+// and on web outside the WebFrame breakpoint, this already equals the container width.
+const { width: INITIAL_WIDTH } = Dimensions.get('window');
 
 const CARD_WIDTH = 176;
 const CARD_HEIGHT = 232;
@@ -31,11 +40,19 @@ const ARC_RADIUS = 480;
 const ANGLE_STEP_DEG = 26;
 const MAX_STEPS = 2;
 const INACTIVE_SCALE = 0.7;
+// The photo list is tripled so there's a full copy of buffer on each side of the copy the
+// user actually sees — once a swipe settles, we invisibly recenter back into the middle
+// copy (jumping by exactly one copy's width lands on pixel-identical content).
+const LOOP_COPIES = 3;
+const RECENTER_DELAY_MS = 400;
 
 type PhotoSource = ImageSource | number;
 
 type MissionSlideProps = {
   photos: PhotoSource[];
+  // 같은 순서/길이로 photos와 짝지어지는 장소 목록 — 가운데(선택된) 카드의 PICK 버튼이
+  // 어느 장소로 이동해야 하는지 알아내는 데 쓴다.
+  places: Place[];
   onOpenListModal: () => void;
 };
 
@@ -43,13 +60,14 @@ type ArcCardProps = {
   source: PhotoSource;
   index: number;
   scrollX: SharedValue<number>;
+  screenWidth: number;
 };
 
 // Positions each card as if it were sitting on the circumference of a circle of
 // radius ARC_RADIUS: the further a card is from the centered index, the more it
 // swings out (translateX = R·sinθ), dips down (translateY = R·(1-cosθ)), and
 // tilts (rotate = θ) — θ growing continuously with scroll, not just per snap.
-const ArcCard = ({ source, index, scrollX }: ArcCardProps) => {
+const ArcCard = ({ source, index, scrollX, screenWidth }: ArcCardProps) => {
   const animatedStyle = useAnimatedStyle(() => {
     const progress = clamp(index - scrollX.value / ITEM_SPACING, -MAX_STEPS, MAX_STEPS);
     const angleDeg = progress * ANGLE_STEP_DEG;
@@ -73,7 +91,7 @@ const ArcCard = ({ source, index, scrollX }: ArcCardProps) => {
 
   return (
     <Animated.View
-      style={[{ position: 'absolute', left: SCREEN_WIDTH / 2 - CARD_WIDTH / 2 }, animatedStyle]}
+      style={[{ position: 'absolute', left: screenWidth / 2 - CARD_WIDTH / 2 }, animatedStyle]}
     >
       <Image
         source={source}
@@ -89,27 +107,144 @@ const ArcCard = ({ source, index, scrollX }: ArcCardProps) => {
   );
 };
 
-const MissionSlide = ({ photos, onOpenListModal }: MissionSlideProps) => {
-  const scrollX = useSharedValue(0);
+const MissionSlide = ({ photos, places, onOpenListModal }: MissionSlideProps) => {
+  // On web behind WebFrame's centered phone frame, the browser window is wider than this
+  // component's own box — arc math must use the box's own width, not the window's.
+  const [screenWidth, setScreenWidth] = useState(INITIAL_WIDTH);
+  const handleLayout = (event: LayoutChangeEvent) => setScreenWidth(event.nativeEvent.layout.width);
+
+  // Looping only makes sense with more than one card; with one (or zero) there's nothing
+  // to cycle through, so we just render it plainly.
+  const loopEnabled = photos.length > 1;
+  const baseCount = photos.length;
+  const middleStart = loopEnabled ? baseCount : 0;
+  const extendedPhotos = useMemo(
+    () => (loopEnabled ? Array.from({ length: LOOP_COPIES }, () => photos).flat() : photos),
+    [photos, loopEnabled],
+  );
+
+  const scrollX = useSharedValue(middleStart * ITEM_SPACING);
   const scrollRef = useRef<Animated.ScrollView>(null);
+  const recenterTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearRecenterTimeout = () => {
+    if (recenterTimeoutRef.current) {
+      clearTimeout(recenterTimeoutRef.current);
+      recenterTimeoutRef.current = null;
+    }
+  };
+
+  // Re-center to the same-looking spot one copy over once a snap has visually settled —
+  // invisible to the user since every copy holds the exact same photos in the same order.
+  const scheduleRecenter = () => {
+    if (!loopEnabled) return;
+    clearRecenterTimeout();
+    recenterTimeoutRef.current = setTimeout(() => {
+      const currentIndex = Math.round(scrollX.value / ITEM_SPACING);
+      let shiftedIndex: number | null = null;
+      if (currentIndex < baseCount) {
+        shiftedIndex = currentIndex + baseCount;
+      } else if (currentIndex >= baseCount * 2) {
+        shiftedIndex = currentIndex - baseCount;
+      }
+      if (shiftedIndex === null) return;
+      scrollX.value = shiftedIndex * ITEM_SPACING;
+      scrollRef.current?.scrollTo({ x: shiftedIndex * ITEM_SPACING, animated: false });
+    }, RECENTER_DELAY_MS);
+  };
+
+  const snapToIndex = (index: number, animated = true) => {
+    const clampedIndex = Math.max(0, Math.min(extendedPhotos.length - 1, index));
+    scrollRef.current?.scrollTo({ x: clampedIndex * ITEM_SPACING, animated });
+    scheduleRecenter();
+  };
 
   const scrollHandler = useAnimatedScrollHandler((event) => {
     scrollX.value = event.contentOffset.x;
   });
 
+  // Extended (tripled) index -> real index into `photos`/`places`, unwrapping the loop copies.
+  const [centeredIndex, setCenteredIndex] = useState(0);
+  useAnimatedReaction(
+    () => Math.round(scrollX.value / ITEM_SPACING),
+    (rawIndex, previousRawIndex) => {
+      if (rawIndex === previousRawIndex) return;
+      const realIndex = loopEnabled ? ((rawIndex % baseCount) + baseCount) % baseCount : rawIndex;
+      runOnJS(setCenteredIndex)(realIndex);
+    },
+  );
+  const centeredPlace = places[centeredIndex];
+  const missionHref = centeredPlace
+    ? {
+        pathname: '/mission/camera' as const,
+        params: {
+          placeId: String(centeredPlace.id),
+          image: centeredPlace.image ?? '',
+          name: centeredPlace.name,
+          latitude: centeredPlace.latitude !== null ? String(centeredPlace.latitude) : '',
+          longitude: centeredPlace.longitude !== null ? String(centeredPlace.longitude) : '',
+        },
+      }
+    : undefined;
+
   // Belt-and-suspenders: snapToInterval alone can settle short of the nearest
   // card (Android in particular), so force-snap to the closest index whenever
   // a drag or its momentum comes to rest.
   const snapToNearest = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const nearestIndex = Math.round(event.nativeEvent.contentOffset.x / ITEM_SPACING);
-    const clampedIndex = Math.max(0, Math.min(photos.length - 1, nearestIndex));
-    scrollRef.current?.scrollTo({ x: clampedIndex * ITEM_SPACING, animated: true });
+    snapToIndex(Math.round(event.nativeEvent.contentOffset.x / ITEM_SPACING));
   };
 
-  const contentWidth = (photos.length - 1) * ITEM_SPACING + SCREEN_WIDTH;
+  const contentWidth = (extendedPhotos.length - 1) * ITEM_SPACING + screenWidth;
+  const maxScrollX = Math.max(0, contentWidth - screenWidth);
+
+  // react-native-web's ScrollView only reacts to touch/wheel/scrollbar input, not a mouse
+  // click-and-drag — so on web we drive scrollLeft ourselves while the mouse button is down.
+  // We track the offset in a ref rather than reading scrollX.value back, since scrollX only
+  // updates once the browser's async 'scroll' event catches up to our manual scrollTo calls —
+  // which may not have happened yet by the time the mouse is released.
+  const isDraggingRef = useRef(false);
+  const dragStartXRef = useRef(0);
+  const dragStartScrollRef = useRef(0);
+  const currentDragOffsetRef = useRef(0);
+
+  const handleDragStart = (event: { clientX: number }) => {
+    clearRecenterTimeout();
+    isDraggingRef.current = true;
+    dragStartXRef.current = event.clientX;
+    dragStartScrollRef.current = scrollX.value;
+    currentDragOffsetRef.current = scrollX.value;
+  };
+
+  const handleDragMove = (event: { clientX: number }) => {
+    if (!isDraggingRef.current) return;
+    const delta = dragStartXRef.current - event.clientX;
+    const nextOffset = clamp(dragStartScrollRef.current + delta, 0, maxScrollX);
+    currentDragOffsetRef.current = nextOffset;
+    scrollRef.current?.scrollTo({ x: nextOffset, animated: false });
+  };
+
+  const handleDragEnd = () => {
+    if (!isDraggingRef.current) return;
+    isDraggingRef.current = false;
+    snapToIndex(Math.round(currentDragOffsetRef.current / ITEM_SPACING));
+  };
+
+  const webDragHandlers =
+    Platform.OS === 'web'
+      ? {
+          onMouseDown: handleDragStart,
+          onMouseMove: handleDragMove,
+          onMouseUp: handleDragEnd,
+          onMouseLeave: handleDragEnd,
+        }
+      : {};
 
   return (
-    <View className="absolute inset-x-0 bottom-0 overflow-hidden" style={{ height: CARD_HEIGHT + 120 }}>
+    <View
+      className="absolute inset-x-0 bottom-0 overflow-hidden"
+      style={{ height: CARD_HEIGHT + 120 }}
+      onLayout={handleLayout}
+    >
       <LinearGradient
         colors={['rgba(255,255,255,0)', '#ffffff']}
         style={StyleSheet.absoluteFill}
@@ -130,15 +265,22 @@ const MissionSlide = ({ photos, onOpenListModal }: MissionSlideProps) => {
         onMomentumScrollEnd={snapToNearest}
         contentContainerStyle={{ width: contentWidth }}
         style={StyleSheet.absoluteFill}
+        {...webDragHandlers}
       />
       <View pointerEvents="none" style={StyleSheet.absoluteFill}>
-        {photos.map((source, index) => (
-          <ArcCard key={index} source={source} index={index} scrollX={scrollX} />
+        {extendedPhotos.map((source, index) => (
+          <ArcCard
+            key={index}
+            source={source}
+            index={index}
+            scrollX={scrollX}
+            screenWidth={screenWidth}
+          />
         ))}
       </View>
       <View className="absolute inset-x-0 bottom-40 items-center">
         <View className="items-center">
-          <MissionButton text="PICK !" />
+          <MissionButton text="PICK !" href={missionHref} />
           <View className="absolute right-full mr-20">
             <HomeButton />
           </View>

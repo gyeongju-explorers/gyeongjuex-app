@@ -9,6 +9,7 @@ export const FALLBACK_PLACES: Place[] = [
     name: '첨성대',
     address: '경주 첨성대 일대',
     image: null,
+    imageCredit: null,
     category: 'HISTORY_CULTURE',
     latitude: 35.8354,
     longitude: 129.2194,
@@ -20,6 +21,7 @@ export const FALLBACK_PLACES: Place[] = [
     name: '동궁과 월지',
     address: '경주 동궁과 월지 일대',
     image: null,
+    imageCredit: null,
     category: 'WORLD_HERITAGE',
     latitude: 35.8347,
     longitude: 129.2249,
@@ -31,6 +33,7 @@ export const FALLBACK_PLACES: Place[] = [
     name: '대릉원',
     address: '경주 대릉원 일대',
     image: null,
+    imageCredit: null,
     category: 'NATURE_HEALING',
     latitude: 35.8367,
     longitude: 129.2119,
@@ -66,6 +69,13 @@ export function useMissionMapData() {
     [places, selectedCategory],
   );
 
+  // 슬라이드는 완료한 장소를 골라 넣을 이유가 없으니, 지도에 보이는 장소 중 미완료(선택 가능한)
+  // 것만 추려서 넘긴다.
+  const selectablePlaces = useMemo(
+    () => filteredPlaces.filter((place) => !place.isCompleted),
+    [filteredPlaces],
+  );
+
   const selectedPlace = useMemo(
     () => places.find((place) => place.id === selectedPlaceId) ?? null,
     [places, selectedPlaceId],
@@ -79,6 +89,7 @@ export function useMissionMapData() {
   return {
     places,
     filteredPlaces,
+    selectablePlaces,
     selectedCategory,
     setSelectedCategory,
     selectedPlaceId,
