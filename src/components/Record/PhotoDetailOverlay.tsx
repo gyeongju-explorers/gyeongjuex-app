@@ -2,6 +2,7 @@ import { Image } from 'expo-image';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
 import {
   Dimensions,
+  type LayoutChangeEvent,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
   Pressable,
@@ -12,12 +13,11 @@ import {
 
 import closeMarkerIcon from '@/assets/icons/close-marker.svg';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const PHOTO_WIDTH = SCREEN_WIDTH * 0.75;
-const PHOTO_HEIGHT = PHOTO_WIDTH * 1.3;
+// Fallback used only before this overlay's own container has been measured — on native,
+// and on web outside the WebFrame breakpoint, this already equals the container width.
+const { width: INITIAL_WIDTH } = Dimensions.get('window');
+
 const PHOTO_GAP = 16;
-const MAIN_PITCH = PHOTO_WIDTH + PHOTO_GAP;
-const SIDE_PADDING = (SCREEN_WIDTH - PHOTO_WIDTH) / 2;
 const CLOSE_BUTTON_SIZE = 44;
 
 const THUMB_WIDTH = 85;
@@ -43,6 +43,16 @@ export default function PhotoDetailOverlay({
   header,
   initialIndex = 0,
 }: PhotoDetailOverlayProps) {
+  // On web behind WebFrame's centered phone frame, the browser window is wider than this
+  // overlay's own box — photo sizing must use the box's own width, not the window's.
+  const [screenWidth, setScreenWidth] = useState(INITIAL_WIDTH);
+  const handleLayout = (event: LayoutChangeEvent) => setScreenWidth(event.nativeEvent.layout.width);
+
+  const photoWidth = screenWidth * 0.75;
+  const photoHeight = photoWidth * 1.3;
+  const mainPitch = photoWidth + PHOTO_GAP;
+  const sidePadding = (screenWidth - photoWidth) / 2;
+
   const startIndex = clamp(initialIndex, 0, Math.max(0, photos.length - 1));
   const [activeIndex, setActiveIndex] = useState(startIndex);
   const mainScrollRef = useRef<ScrollView>(null);
@@ -50,17 +60,17 @@ export default function PhotoDetailOverlay({
 
   const thumbContentWidth =
     THUMB_STRIP_PADDING * 2 + photos.length * THUMB_WIDTH + (photos.length - 1) * THUMB_GAP;
-  const maxThumbScroll = Math.max(0, thumbContentWidth - SCREEN_WIDTH);
+  const maxThumbScroll = Math.max(0, thumbContentWidth - screenWidth);
 
   const centeredThumbX = (index: number) =>
     clamp(
-      THUMB_STRIP_PADDING + index * THUMB_PITCH + THUMB_WIDTH / 2 - SCREEN_WIDTH / 2,
+      THUMB_STRIP_PADDING + index * THUMB_PITCH + THUMB_WIDTH / 2 - screenWidth / 2,
       0,
       maxThumbScroll,
     );
 
   useEffect(() => {
-    mainScrollRef.current?.scrollTo({ x: startIndex * MAIN_PITCH, animated: false });
+    mainScrollRef.current?.scrollTo({ x: startIndex * mainPitch, animated: false });
     thumbScrollRef.current?.scrollTo({ x: centeredThumbX(startIndex), animated: false });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -70,7 +80,7 @@ export default function PhotoDetailOverlay({
     setActiveIndex(clamped);
 
     if (source !== 'main') {
-      mainScrollRef.current?.scrollTo({ x: clamped * MAIN_PITCH, animated: true });
+      mainScrollRef.current?.scrollTo({ x: clamped * mainPitch, animated: true });
     }
     if (source !== 'thumb') {
       thumbScrollRef.current?.scrollTo({ x: centeredThumbX(clamped), animated: true });
@@ -78,36 +88,36 @@ export default function PhotoDetailOverlay({
   };
 
   const handleMainScrollEnd = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const index = Math.round(event.nativeEvent.contentOffset.x / MAIN_PITCH);
+    const index = Math.round(event.nativeEvent.contentOffset.x / mainPitch);
     goToIndex(index, 'main');
   };
 
   const handleThumbScrollEnd = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const index = Math.round(
-      (event.nativeEvent.contentOffset.x + SCREEN_WIDTH / 2 - THUMB_STRIP_PADDING - THUMB_WIDTH / 2) /
+      (event.nativeEvent.contentOffset.x + screenWidth / 2 - THUMB_STRIP_PADDING - THUMB_WIDTH / 2) /
         THUMB_PITCH,
     );
     goToIndex(index, 'thumb');
   };
 
   return (
-    <View style={styles.dim}>
+    <View style={styles.dim} onLayout={handleLayout}>
       <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
       <View style={{ zIndex: 1, alignItems: 'center' }}>
         {header}
 
-        <View style={{ width: SCREEN_WIDTH }}>
+        <View style={{ width: screenWidth }}>
           <ScrollView
             ref={mainScrollRef}
             horizontal
-            style={{ width: SCREEN_WIDTH, flexGrow: 0 }}
+            style={{ width: screenWidth, flexGrow: 0 }}
             contentContainerStyle={{
-              paddingHorizontal: SIDE_PADDING,
+              paddingHorizontal: sidePadding,
               alignItems: 'center',
               gap: PHOTO_GAP,
             }}
             showsHorizontalScrollIndicator={false}
-            snapToInterval={MAIN_PITCH}
+            snapToInterval={mainPitch}
             snapToAlignment="start"
             decelerationRate="fast"
             onMomentumScrollEnd={handleMainScrollEnd}
@@ -116,7 +126,7 @@ export default function PhotoDetailOverlay({
               <Image
                 key={index}
                 source={{ uri }}
-                style={{ width: PHOTO_WIDTH, height: PHOTO_HEIGHT }}
+                style={{ width: photoWidth, height: photoHeight }}
                 className="border-[12px] border-white rounded-[64px]"
               />
             ))}
@@ -127,7 +137,7 @@ export default function PhotoDetailOverlay({
               position: 'absolute',
               zIndex: 2,
               top: -CLOSE_BUTTON_SIZE / 2 - 24,
-              left: SCREEN_WIDTH / 2 + PHOTO_WIDTH / 2 - CLOSE_BUTTON_SIZE / 2 - 12,
+              left: screenWidth / 2 + photoWidth / 2 - CLOSE_BUTTON_SIZE / 2 - 12,
             }}
           >
             <Image
@@ -141,7 +151,7 @@ export default function PhotoDetailOverlay({
           <ScrollView
             ref={thumbScrollRef}
             horizontal
-            style={{ width: SCREEN_WIDTH, flexGrow: 0, marginTop: 32 }}
+            style={{ width: screenWidth, flexGrow: 0, marginTop: 32 }}
             contentContainerStyle={{
               paddingHorizontal: THUMB_STRIP_PADDING,
               alignItems: 'center',

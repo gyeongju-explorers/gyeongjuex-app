@@ -1,52 +1,45 @@
-import { Image, type ImageSource } from 'expo-image';
-import { Pressable, ScrollView, View } from 'react-native';
+import { Image } from 'expo-image';
+import { Pressable, View } from 'react-native';
 
+import type { Place } from '@/api/places';
 import locationIcon from '@/assets/icons/location.svg';
+import image1 from '@/assets/images/image1.png';
 import { ThemedText } from '@/components/global/themed-text';
 import MissionButton from './MissionButton';
 
-type PhotoSource = ImageSource | number;
-
 export type MissionCardProps = {
-  photos: PhotoSource[];
-  title: string;
-  description: string;
+  place: Place;
 };
 
-const MissionCard = ({ photos, title, description }: MissionCardProps) => {
+// Same title/address/image/PICK layout as PlaceInfoModal, minus its floating-card chrome —
+// this renders as one row of the mission list instead. Root is a Pressable (no handler needed)
+// purely so a tap inside the row doesn't bubble up and close the list's backdrop.
+const MissionCard = ({ place }: MissionCardProps) => {
   return (
-    <Pressable className="pl-24 py-16">
-      <View className="flex-1 gap-10">
-        <ThemedText weight="bold" className="text-xl">
-          {title}
-        </ThemedText>
-
-        <View className="flex-row items-center gap-6 mb-6">
-          <Image source={locationIcon} className="w-12 h-14" />
-          <ThemedText className="text-gray-900 text-xs">{description}</ThemedText>
+    <Pressable className="flex-row gap-12 px-24">
+      <Image source={place.image ? { uri: place.image } : image1} className="w-84 rounded-xl" />
+      <View className="flex-1 gap-8 justify-center pt-8">
+        <ThemedText className="text-base font-bold">{place.name}</ThemedText>
+        <View className="flex-row items-center gap-4 mb-12">
+          <Image source={locationIcon} className="w-10 h-12" />
+          <ThemedText className="text-gray-900 text-xs flex-1" numberOfLines={2}>
+            {place.address}
+          </ThemedText>
         </View>
-
-        {/* images */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          nestedScrollEnabled
-          className="overflow-hidden"
-        >
-          <View className="flex-row gap-8">
-            {photos.map((photo, index) => (
-              <Image
-                key={index}
-                source={photo}
-                style={{ width: 85, height: 118, borderRadius: 20 }}
-              />
-            ))}
-          </View>
-        </ScrollView>
-
-        <View className="pr-24 mt-12">
-          <MissionButton text="PICK !" className="w-full" />
-        </View>
+        <MissionButton
+          text="PICK !"
+          className="w-full"
+          href={{
+            pathname: '/mission/camera',
+            params: {
+              placeId: String(place.id),
+              image: place.image ?? '',
+              name: place.name,
+              latitude: place.latitude !== null ? String(place.latitude) : '',
+              longitude: place.longitude !== null ? String(place.longitude) : '',
+            },
+          }}
+        />
       </View>
     </Pressable>
   );

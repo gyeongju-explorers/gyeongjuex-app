@@ -1,11 +1,23 @@
-// TODO: 지금은 메모리에만 저장돼서 앱을 재시작하면 로그인 상태가 풀림.
-// 나중에 AsyncStorage 등으로 영구 저장하도록 교체.
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const ACCESS_TOKEN_KEY = 'accessToken';
+
 let accessToken: string | null = null;
 
 export function setAccessToken(token: string | null) {
   accessToken = token;
+  if (token) {
+    AsyncStorage.setItem(ACCESS_TOKEN_KEY, token);
+  } else {
+    AsyncStorage.removeItem(ACCESS_TOKEN_KEY);
+  }
 }
 
 export function getAccessToken() {
+  return accessToken;
+}
+
+export async function hydrateAccessToken() {
+  accessToken = await AsyncStorage.getItem(ACCESS_TOKEN_KEY);
   return accessToken;
 }

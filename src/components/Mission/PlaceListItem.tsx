@@ -15,10 +15,17 @@ const PlaceListItem = ({ place }: PlaceListItemProps) => {
   return (
     <View className="flex-row gap-16">
       {/* image */}
-      <Image
-        source={place.image ? { uri: place.image } : image1}
-        className="w-102 h-140 rounded-3xl"
-      />
+      <View className="w-102 h-140">
+        <Image
+          source={place.image ? { uri: place.image } : image1}
+          className="w-102 h-140 rounded-3xl"
+        />
+        {place.imageCredit && (
+          <ThemedText className="absolute bottom-4 left-4 right-4 text-[8px] text-white" numberOfLines={1}>
+            {place.imageCredit}
+          </ThemedText>
+        )}
+      </View>
       <View className="flex-1 justify-between py-8">
         <View className="flex-1 gap-8">
           {/* title */}

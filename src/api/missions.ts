@@ -10,9 +10,15 @@ export type GradeProgress = {
   tiers: (GradeTier & { earned: boolean })[];
 };
 
+export type RelatedTouristSpot = {
+  name: string;
+  category: string;
+};
+
 export type CompleteMissionResult = GradeProgress & {
   placeName: string;
   photoUrl: string;
+  relatedPlaces: RelatedTouristSpot[];
 };
 
 export async function completeMission(params: {

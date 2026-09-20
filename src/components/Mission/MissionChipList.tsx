@@ -12,7 +12,7 @@ type MissionChipListProps = {
 
 const MissionChipList = ({ selectedCategory, onSelectCategory }: MissionChipListProps) => {
   return (
-    <View className="flex-row gap-4">
+    <View className="flex-row gap-4 justify-center py-16">
       {CATEGORY_OPTIONS.map(({ key, label }) => (
         <MissionChip
           key={key}
