@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react';
 import { useColorScheme } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
-import { hydrateAccessToken } from '@/api/session';
+import { hydrateSession } from '@/api/session';
 import WebFrame from '@/components/global/WebFrame';
 
 SplashScreen.preventAutoHideAsync();
@@ -22,7 +22,7 @@ export default function RootLayout() {
   const [sessionReady, setSessionReady] = useState(false);
 
   useEffect(() => {
-    hydrateAccessToken().finally(() => setSessionReady(true));
+    hydrateSession().finally(() => setSessionReady(true));
   }, []);
 
   useEffect(() => {

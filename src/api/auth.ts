@@ -35,13 +35,6 @@ export async function login(payload: LoginPayload) {
   return data;
 }
 
-export type MeResponse = { id: number; nickname: string };
-
-export async function getMe() {
-  const { data } = await apiClient.get<MeResponse>('/user/me');
-  return data;
-}
-
 export async function checkUsernameAvailable(username: string) {
   const { data } = await apiClient.get<{ available: boolean }>('/user/check-username', {
     params: { username },
@@ -51,4 +44,29 @@ export async function checkUsernameAvailable(username: string) {
 
 export async function withdraw() {
   await apiClient.delete('/user');
+}
+
+export type MeResponse = {
+  id: number;
+  username: string;
+  nickname: string;
+  name: string;
+};
+
+export async function getMe() {
+  const { data } = await apiClient.get<MeResponse>('/user/me');
+  return data;
+}
+
+export type UpdateMePayload = {
+  name?: string;
+  nickname?: string;
+  username?: string;
+  password?: string;
+  passwordConfirm?: string;
+};
+
+export async function updateMe(payload: UpdateMePayload) {
+  const { data } = await apiClient.patch<MeResponse>('/user/me', payload);
+  return data;
 }

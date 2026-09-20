@@ -5,7 +5,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { getMe } from '@/api/auth';
 import { getGradeProgress, type GradeProgress } from '@/api/missions';
-import { getNickname, setNickname } from '@/api/session';
 import badgeEmblemInactiveIcon from '@/assets/icons/badge-emblem-inactive.svg';
 import badgeEmblemIcon from '@/assets/icons/badge-emblem.svg';
 import indicatorDotIcon from '@/assets/icons/indicator-dot.svg';
@@ -99,7 +98,7 @@ function GradeProgressBar({
 
 export default function Badge() {
   const [progress, setProgress] = useState<GradeProgress>(FALLBACK_GRADE_PROGRESS);
-  const [nickname, setNicknameState] = useState(getNickname());
+  const [nickname, setNickname] = useState<string | null>(null);
 
   useEffect(() => {
     getGradeProgress()
@@ -108,18 +107,11 @@ export default function Badge() {
         console.error('Failed to fetch grade progress', error);
       });
 
-    // 새 로그인 이후에는 session에 닉네임이 저장돼 있지만, 이 코드가 배포되기 전에
-    // 이미 로그인해 토큰만 갖고 있는 기존 세션은 닉네임이 없으므로 여기서 채워준다.
-    if (!getNickname()) {
-      getMe()
-        .then((me) => {
-          setNickname(me.nickname);
-          setNicknameState(me.nickname);
-        })
-        .catch((error) => {
-          console.error('Failed to fetch user profile', error);
-        });
-    }
+    getMe()
+      .then((me) => setNickname(me.nickname))
+      .catch((error) => {
+        console.error('Failed to fetch user profile', error);
+      });
   }, []);
 
   const currentTierIndex = progress.tiers.findIndex(

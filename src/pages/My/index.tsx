@@ -1,11 +1,11 @@
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { withdraw } from '@/api/auth';
-import { setAccessToken, setNickname } from '@/api/session';
+import { getMe, type MeResponse, updateMe, withdraw } from '@/api/auth';
+import { setAccessToken, setRefreshToken } from '@/api/session';
 import cameraIcon from '@/assets/icons/camera.svg';
 import profileDefaultIcon from '@/assets/icons/profile-default.svg';
 import WithdrawConfirmOverlay from '@/components/My/WithdrawConfirmOverlay';
@@ -14,13 +14,9 @@ import { ThemedView } from '@/components/global/themed-view';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 import { useHideNavWhile } from '@/hooks/use-nav-visibility';
 
-// TODO: 실제 로그인한 사용자 정보로 교체.
-const initialUser = {
-  name: '김꼼지',
-  nickname: '김꼼지',
-  id: 'asdf',
-  password: 'qwer123',
-};
+type EditableFields = Pick<MeResponse, 'name' | 'nickname' | 'username'>;
+
+const EMPTY_FORM: EditableFields = { name: '', nickname: '', username: '' };
 
 type InfoRowProps = {
   label: string;
@@ -28,10 +24,21 @@ type InfoRowProps = {
   round?: 'top' | 'bottom';
   isLast?: boolean;
   editable?: boolean;
+  secureTextEntry?: boolean;
+  placeholder?: string;
   onChangeValue?: (value: string) => void;
 };
 
-function InfoRow({ label, value, round, isLast, editable, onChangeValue }: InfoRowProps) {
+function InfoRow({
+  label,
+  value,
+  round,
+  isLast,
+  editable,
+  secureTextEntry,
+  placeholder,
+  onChangeValue,
+}: InfoRowProps) {
   const roundClass = round === 'top' ? 'rounded-t-[12px]' : round === 'bottom' ? 'rounded-b-[12px]' : '';
 
   return (
@@ -43,6 +50,8 @@ function InfoRow({ label, value, round, isLast, editable, onChangeValue }: InfoR
         <TextInput
           value={value}
           onChangeText={onChangeValue}
+          secureTextEntry={secureTextEntry}
+          placeholder={placeholder}
           className="flex-1 pl-16 text-right text-gray-500"
         />
       ) : (
@@ -53,30 +62,79 @@ function InfoRow({ label, value, round, isLast, editable, onChangeValue }: InfoR
 }
 
 export default function My() {
+  const [user, setUser] = useState<MeResponse | null>(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [form, setForm] = useState(initialUser);
+  const [form, setForm] = useState<EditableFields>(EMPTY_FORM);
+  const [newPassword, setNewPassword] = useState('');
   const [showWithdrawConfirm, setShowWithdrawConfirm] = useState(false);
   useHideNavWhile(showWithdrawConfirm);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    getMe()
+      .then((data) => {
+        if (!isMounted) return;
+        setUser(data);
+        setForm({ name: data.name, nickname: data.nickname, username: data.username });
+      })
+      .catch(() => {
+        // 회원정보를 불러오지 못한 경우, 빈 값으로 둔다.
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const handleWithdraw = async () => {
     try {
       await withdraw();
       setAccessToken(null);
-      setNickname(null);
+      setRefreshToken(null);
       router.replace('/login');
     } catch {
       // 탈퇴 실패 시 팝업을 그대로 두고 사용자가 다시 시도할 수 있게 함.
     }
   };
 
-  const handleToggleEdit = () => {
-    if (isEditing) {
-      // TODO: 실제 회원정보 수정 API 호출로 교체.
+  const handleToggleEdit = async () => {
+    if (!isEditing) {
+      setIsEditing(true);
+      return;
     }
-    setIsEditing((prev) => !prev);
+
+    if (!user) {
+      setIsEditing(false);
+      return;
+    }
+
+    const payload: Parameters<typeof updateMe>[0] = {};
+    if (form.name !== user.name) payload.name = form.name;
+    if (form.nickname !== user.nickname) payload.nickname = form.nickname;
+    if (form.username !== user.username) payload.username = form.username;
+    if (newPassword.trim().length > 0) {
+      payload.password = newPassword;
+      payload.passwordConfirm = newPassword;
+    }
+
+    if (Object.keys(payload).length === 0) {
+      setIsEditing(false);
+      return;
+    }
+
+    try {
+      const updated = await updateMe(payload);
+      setUser(updated);
+      setForm({ name: updated.name, nickname: updated.nickname, username: updated.username });
+      setNewPassword('');
+      setIsEditing(false);
+    } catch {
+      // 수정 실패 시 편집 모드를 유지해서 다시 시도할 수 있게 함.
+    }
   };
 
-  const updateField = (field: keyof typeof initialUser) => (value: string) => {
+  const updateField = (field: keyof EditableFields) => (value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -113,15 +171,17 @@ export default function My() {
             />
             <InfoRow
               label="아이디"
-              value={form.id}
+              value={form.username}
               editable={isEditing}
-              onChangeValue={updateField('id')}
+              onChangeValue={updateField('username')}
             />
             <InfoRow
               label="비밀번호 변경"
-              value={form.password}
+              value={isEditing ? newPassword : '********'}
               editable={isEditing}
-              onChangeValue={updateField('password')}
+              secureTextEntry
+              placeholder="새 비밀번호"
+              onChangeValue={setNewPassword}
               round="bottom"
               isLast
             />
@@ -132,7 +192,7 @@ export default function My() {
           <TouchableOpacity
             onPress={() => {
               setAccessToken(null);
-              setNickname(null);
+              setRefreshToken(null);
               router.replace('/login');
             }}
           >
