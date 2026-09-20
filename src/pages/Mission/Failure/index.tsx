@@ -26,7 +26,7 @@ export default function MissionFailure() {
       <SafeAreaView className="flex-1 px-24 gap-[240px] justify-center">
         <View className="items-center justify-center gap-16">
           <ThemedText className="text-3xl font-bold text-center">미션 실패</ThemedText>
-          <ThemedText className="text-gray-900 text-center">
+          <ThemedText className="text-gray-900 text-center px-16">
             {message ?? '미션 인증에 실패했어요. 다시 시도해주세요.'}
           </ThemedText>
         </View>

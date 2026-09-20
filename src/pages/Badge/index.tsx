@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { getMe } from '@/api/auth';
 import { getGradeProgress, type GradeProgress } from '@/api/missions';
 import badgeEmblemInactiveIcon from '@/assets/icons/badge-emblem-inactive.svg';
 import badgeEmblemIcon from '@/assets/icons/badge-emblem.svg';
@@ -31,9 +32,6 @@ const FALLBACK_GRADE_PROGRESS: GradeProgress = {
     { threshold: 14, title: '마스터 탐험가', earned: false },
   ],
 };
-
-// TODO: 실제 로그인한 사용자 닉네임으로 교체 (src/pages/My도 동일한 임시값 사용 중).
-const CURRENT_USER_NICKNAME = '김꼼지';
 
 // 점(등급 마커)은 라벨과 똑같이 균등 간격(justify-between)으로 배치한다 — 두 줄이 같은
 // 레이아웃 규칙을 쓰기 때문에 항상 서로 정확히 정렬된다. 채워지는 길이만 실제 completedCount에
@@ -100,12 +98,19 @@ function GradeProgressBar({
 
 export default function Badge() {
   const [progress, setProgress] = useState<GradeProgress>(FALLBACK_GRADE_PROGRESS);
+  const [nickname, setNickname] = useState<string | null>(null);
 
   useEffect(() => {
     getGradeProgress()
       .then(setProgress)
       .catch((error) => {
         console.error('Failed to fetch grade progress', error);
+      });
+
+    getMe()
+      .then((me) => setNickname(me.nickname))
+      .catch((error) => {
+        console.error('Failed to fetch user profile', error);
       });
   }, []);
 
@@ -122,7 +127,7 @@ export default function Badge() {
       <SafeAreaView edges={['top']} style={styles.safeArea}>
         <View className="bg-secondary px-24 pb-28 pt-24">
           <ThemedText className="text-base text-gray-300">
-            {CURRENT_USER_NICKNAME}님의 등급
+            {nickname ?? '탐험가'}님의 등급
           </ThemedText>
 
           <View className="mt-8">
