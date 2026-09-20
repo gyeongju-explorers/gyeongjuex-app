@@ -38,13 +38,13 @@ export async function completeMission(params: {
     type: 'image/jpeg',
   } as unknown as Blob);
 
-  const { data } = await apiClient.post<CompleteMissionResult>('/missions/complete', formData, {
+  const { data } = await apiClient.post<CompleteMissionResult>('/api/missions/complete', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
   });
   return data;
 }
 
 export async function getGradeProgress(): Promise<GradeProgress> {
-  const { data } = await apiClient.get<GradeProgress>('/missions/grade');
+  const { data } = await apiClient.get<GradeProgress>('/api/missions/grade');
   return data;
 }

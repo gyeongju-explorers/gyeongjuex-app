@@ -51,6 +51,15 @@ export async function uploadGeneralPhoto(params: {
 }): Promise<string> {
   const key = `general/${params.userId}/${Date.now()}-${randomUUID()}.${extensionFor(params.contentType)}`;
   return uploadPhoto(key, params.buffer, params.contentType);
+  function keyFromPhotoUrl(url: string): string | null {
+    const prefix = publicBaseUrl
+      ? `${publicBaseUrl.replace(/\/$/, '')}/`
+      : `https://${bucket}.s3.${region}.amazonaws.com/`;
+
+    return url.startsWith(prefix) ? url.slice(prefix.length) : null;
+  }
+}
+
 function keyFromPhotoUrl(url: string): string | null {
   const prefix = publicBaseUrl
     ? `${publicBaseUrl.replace(/\/$/, '')}/`
@@ -63,9 +72,7 @@ function keyFromPhotoUrl(url: string): string | null {
 export async function deletePhotosByUrl(urls: string[]): Promise<void> {
   if (!bucket || urls.length === 0) return;
 
-  const keys = urls
-    .map(keyFromPhotoUrl)
-    .filter((key): key is string => key !== null);
+  const keys = urls.map(keyFromPhotoUrl).filter((key): key is string => key !== null);
 
   for (let i = 0; i < keys.length; i += 1000) {
     const chunk = keys.slice(i, i + 1000);

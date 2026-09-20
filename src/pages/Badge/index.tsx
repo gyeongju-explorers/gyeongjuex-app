@@ -104,8 +104,8 @@ export default function Badge() {
   useEffect(() => {
     getGradeProgress()
       .then(setProgress)
-      .catch(() => {
-        // 로그인 연동 전이라 인증 실패가 예상되는 상태 — 폴백 값 유지.
+      .catch((error) => {
+        console.error('Failed to fetch grade progress', error);
       });
   }, []);
 
