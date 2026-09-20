@@ -4,7 +4,6 @@ import { Pressable, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import type { RelatedTouristSpot } from '@/api/missions';
-// TODO: 등급별 실제 배지 일러스트로 교체 — 지금은 기존 네비 배지 아이콘을 확대한 임시 그래픽.
 import badgeEmblem from '@/assets/icons/badge-emblem.svg';
 import { ThemedText } from '@/components/global/themed-text';
 

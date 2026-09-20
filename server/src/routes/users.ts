@@ -4,7 +4,7 @@ import type { ResultSetHeader, RowDataPacket } from 'mysql2';
 
 import { pool } from '../db.js';
 import { deletePhotosByUrl } from '../lib/s3.js';
-import { signAccessToken, signRefreshToken } from '../lib/tokens.js';
+import { signAccessToken, signRefreshToken, verifyToken } from '../lib/tokens.js';
 import { type AuthedRequest, requireAuth } from '../middleware/auth.js';
 
 interface UserRow extends RowDataPacket {
@@ -16,6 +16,13 @@ interface UserRow extends RowDataPacket {
 
 interface PhotoUrlRow extends RowDataPacket {
   image_url: string;
+}
+
+interface MeRow extends RowDataPacket {
+  id: number;
+  username: string;
+  nickname: string;
+  name: string;
 }
 
 const router = Router();
@@ -101,6 +108,108 @@ router.post('/login', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: '로그인에 실패했습니다.' });
+  }
+});
+
+// POST /user/refresh
+// accessToken이 만료된 경우, refreshToken으로 새 토큰 쌍을 발급.
+router.post('/refresh', async (req, res) => {
+  const { refreshToken } = req.body ?? {};
+
+  if (!refreshToken) {
+    res.status(401).json({ message: '리프레시 토큰이 필요합니다.' });
+    return;
+  }
+
+  try {
+    const { userId } = verifyToken(refreshToken);
+    res.json({
+      accessToken: signAccessToken(userId),
+      refreshToken: signRefreshToken(userId),
+    });
+  } catch {
+    res.status(401).json({ message: '유효하지 않은 리프레시 토큰입니다.' });
+  }
+});
+
+// GET /user/me
+router.get('/me', requireAuth, async (req: AuthedRequest, res) => {
+  try {
+    const [rows] = await pool.query<MeRow[]>(
+      'SELECT id, username, nickname, name FROM user WHERE id = ?',
+      [req.userId],
+    );
+    const user = rows[0];
+
+    if (!user) {
+      res.status(404).json({ message: '사용자를 찾을 수 없습니다.' });
+      return;
+    }
+
+    res.json(user);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: '회원정보를 불러오지 못했습니다.' });
+  }
+});
+
+// PATCH /user/me
+router.patch('/me', requireAuth, async (req: AuthedRequest, res) => {
+  const { name, nickname, username, password, passwordConfirm } = req.body ?? {};
+
+  if (password !== undefined && password !== passwordConfirm) {
+    res.status(400).json({ message: '비밀번호가 일치하지 않습니다.' });
+    return;
+  }
+
+  try {
+    if (username) {
+      const [existing] = await pool.query<UserRow[]>(
+        'SELECT id FROM user WHERE username = ? AND id != ?',
+        [username, req.userId],
+      );
+      if (existing.length > 0) {
+        res.status(400).json({ message: '이미 사용 중인 아이디입니다.' });
+        return;
+      }
+    }
+
+    const fields: string[] = [];
+    const values: (string | number)[] = [];
+
+    if (name) {
+      fields.push('name = ?');
+      values.push(name);
+    }
+    if (nickname) {
+      fields.push('nickname = ?');
+      values.push(nickname);
+    }
+    if (username) {
+      fields.push('username = ?');
+      values.push(username);
+    }
+    if (password) {
+      fields.push('password_hash = ?');
+      values.push(await bcrypt.hash(password, 10));
+    }
+
+    if (fields.length === 0) {
+      res.status(400).json({ message: '수정할 내용이 없습니다.' });
+      return;
+    }
+
+    values.push(req.userId!);
+    await pool.query(`UPDATE user SET ${fields.join(', ')} WHERE id = ?`, values);
+
+    const [rows] = await pool.query<MeRow[]>(
+      'SELECT id, username, nickname, name FROM user WHERE id = ?',
+      [req.userId],
+    );
+    res.json(rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: '회원정보 수정에 실패했습니다.' });
   }
 });
 
