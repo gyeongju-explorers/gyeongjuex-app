@@ -104,6 +104,26 @@ router.post('/login', async (req, res) => {
   }
 });
 
+// GET /user/me
+router.get('/me', requireAuth, async (req: AuthedRequest, res) => {
+  try {
+    const [rows] = await pool.query<UserRow[]>('SELECT id, nickname FROM user WHERE id = ?', [
+      req.userId,
+    ]);
+    const user = rows[0];
+
+    if (!user) {
+      res.status(404).json({ message: '사용자를 찾을 수 없습니다.' });
+      return;
+    }
+
+    res.json({ id: user.id, nickname: user.nickname });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: '사용자 정보를 불러오지 못했습니다.' });
+  }
+});
+
 // DELETE /user
 // 회원 탈퇴: 사용자가 소유한 사진/미션 완료 기록을 먼저 지우고 사용자 행을 삭제.
 router.delete('/', requireAuth, async (req: AuthedRequest, res) => {

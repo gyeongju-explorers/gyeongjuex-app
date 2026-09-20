@@ -35,6 +35,13 @@ export async function login(payload: LoginPayload) {
   return data;
 }
 
+export type MeResponse = { id: number; nickname: string };
+
+export async function getMe() {
+  const { data } = await apiClient.get<MeResponse>('/user/me');
+  return data;
+}
+
 export async function checkUsernameAvailable(username: string) {
   const { data } = await apiClient.get<{ available: boolean }>('/user/check-username', {
     params: { username },

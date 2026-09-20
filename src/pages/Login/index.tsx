@@ -5,7 +5,7 @@ import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { login } from '@/api/auth';
-import { setAccessToken } from '@/api/session';
+import { setAccessToken, setNickname } from '@/api/session';
 import titleCompleteImage from '@/assets/images/title-complete.svg';
 import titleImage from '@/assets/images/title.svg';
 import Button from '@/components/global/Button';
@@ -39,6 +39,7 @@ export default function Login() {
       // TODO: refreshToken을 로컬(AsyncStorage 등)에 저장해서 앱을 재시작해도 로그인 상태 유지하기.
       const response = await login({ username: id, password });
       setAccessToken(response.accessToken);
+      setNickname(response.user.nickname);
       setLoginFailed(false);
       router.replace('/');
     } catch {

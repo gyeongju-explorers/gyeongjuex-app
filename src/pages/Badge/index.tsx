@@ -3,7 +3,9 @@ import { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { getMe } from '@/api/auth';
 import { getGradeProgress, type GradeProgress } from '@/api/missions';
+import { getNickname, setNickname } from '@/api/session';
 import badgeEmblemInactiveIcon from '@/assets/icons/badge-emblem-inactive.svg';
 import badgeEmblemIcon from '@/assets/icons/badge-emblem.svg';
 import indicatorDotIcon from '@/assets/icons/indicator-dot.svg';
@@ -31,9 +33,6 @@ const FALLBACK_GRADE_PROGRESS: GradeProgress = {
     { threshold: 14, title: '마스터 탐험가', earned: false },
   ],
 };
-
-// TODO: 실제 로그인한 사용자 닉네임으로 교체 (src/pages/My도 동일한 임시값 사용 중).
-const CURRENT_USER_NICKNAME = '김꼼지';
 
 // 점(등급 마커)은 라벨과 똑같이 균등 간격(justify-between)으로 배치한다 — 두 줄이 같은
 // 레이아웃 규칙을 쓰기 때문에 항상 서로 정확히 정렬된다. 채워지는 길이만 실제 completedCount에
@@ -100,6 +99,7 @@ function GradeProgressBar({
 
 export default function Badge() {
   const [progress, setProgress] = useState<GradeProgress>(FALLBACK_GRADE_PROGRESS);
+  const [nickname, setNicknameState] = useState(getNickname());
 
   useEffect(() => {
     getGradeProgress()
@@ -107,6 +107,19 @@ export default function Badge() {
       .catch((error) => {
         console.error('Failed to fetch grade progress', error);
       });
+
+    // 새 로그인 이후에는 session에 닉네임이 저장돼 있지만, 이 코드가 배포되기 전에
+    // 이미 로그인해 토큰만 갖고 있는 기존 세션은 닉네임이 없으므로 여기서 채워준다.
+    if (!getNickname()) {
+      getMe()
+        .then((me) => {
+          setNickname(me.nickname);
+          setNicknameState(me.nickname);
+        })
+        .catch((error) => {
+          console.error('Failed to fetch user profile', error);
+        });
+    }
   }, []);
 
   const currentTierIndex = progress.tiers.findIndex(
@@ -122,7 +135,7 @@ export default function Badge() {
       <SafeAreaView edges={['top']} style={styles.safeArea}>
         <View className="bg-secondary px-24 pb-28 pt-24">
           <ThemedText className="text-base text-gray-300">
-            {CURRENT_USER_NICKNAME}님의 등급
+            {nickname ?? '탐험가'}님의 등급
           </ThemedText>
 
           <View className="mt-8">

@@ -5,7 +5,7 @@ import { StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { withdraw } from '@/api/auth';
-import { setAccessToken } from '@/api/session';
+import { setAccessToken, setNickname } from '@/api/session';
 import cameraIcon from '@/assets/icons/camera.svg';
 import profileDefaultIcon from '@/assets/icons/profile-default.svg';
 import WithdrawConfirmOverlay from '@/components/My/WithdrawConfirmOverlay';
@@ -62,6 +62,7 @@ export default function My() {
     try {
       await withdraw();
       setAccessToken(null);
+      setNickname(null);
       router.replace('/login');
     } catch {
       // 탈퇴 실패 시 팝업을 그대로 두고 사용자가 다시 시도할 수 있게 함.
@@ -131,6 +132,7 @@ export default function My() {
           <TouchableOpacity
             onPress={() => {
               setAccessToken(null);
+              setNickname(null);
               router.replace('/login');
             }}
           >
