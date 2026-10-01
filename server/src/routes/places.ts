@@ -112,7 +112,7 @@ router.get('/places', requireAuth, async (req: AuthedRequest, res) => {
   }
 });
 
-// GET /api/places/nearby?lat=&lng=&limit= (미션 홈화면 전용, 개수 제한)
+// GET /api/places/nearby?lat=&lng=&limit= (미션 홈화면 전용, 개수 제한 — 이미 성공한 장소는 제외)
 router.get('/places/nearby', requireAuth, async (req: AuthedRequest, res) => {
   const lat = parseCoordinate(req.query.lat);
   const lng = parseCoordinate(req.query.lng);
@@ -133,6 +133,7 @@ router.get('/places/nearby', requireAuth, async (req: AuthedRequest, res) => {
        FROM place p
        LEFT JOIN mission_completion mc ON mc.place_id = p.id AND mc.user_id = ?
        WHERE p.latitude IS NOT NULL AND p.longitude IS NOT NULL
+         AND mc.id IS NULL
        ORDER BY distance_km ASC
        LIMIT ?`,
       [lat, lng, lat, req.userId, limit]

@@ -42,6 +42,9 @@ export const FALLBACK_PLACES: Place[] = [
   },
 ];
 
+// 대표 사진이 첫인상으로 쓰기엔 아쉬운 장소 — 슬라이드 맨 앞에 오지 않도록 뒤로 보낸다.
+const SLIDE_BACK_PLACE_NAMES = ['천마총'];
+
 export function useMissionMapData() {
   const [places, setPlaces] = useState<Place[]>(FALLBACK_PLACES);
   const [selectedCategory, setSelectedCategory] = useState<PlaceCategory | null>(null);
@@ -72,7 +75,14 @@ export function useMissionMapData() {
   // 슬라이드는 완료한 장소를 골라 넣을 이유가 없으니, 지도에 보이는 장소 중 미완료(선택 가능한)
   // 것만 추려서 넘긴다.
   const selectablePlaces = useMemo(
-    () => filteredPlaces.filter((place) => !place.isCompleted),
+    () =>
+      filteredPlaces
+        .filter((place) => !place.isCompleted)
+        .sort(
+          (a, b) =>
+            Number(SLIDE_BACK_PLACE_NAMES.includes(a.name)) -
+            Number(SLIDE_BACK_PLACE_NAMES.includes(b.name)),
+        ),
     [filteredPlaces],
   );
 

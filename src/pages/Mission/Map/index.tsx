@@ -95,7 +95,9 @@ export default function MissionMap() {
                 onTap={() => setViewingPhotoPlaceId(place.id)}
               >
                 <PhotoMarker
-                  photos={getPlacePhotos(place).slice(0, 2) as Parameters<typeof PhotoMarker>[0]['photos']}
+                  photos={
+                    getPlacePhotos(place).slice(0, 2) as Parameters<typeof PhotoMarker>[0]['photos']
+                  }
                   active
                 />
               </NaverMapMarkerOverlay>
@@ -147,7 +149,9 @@ export default function MissionMap() {
       {viewingPhotoPlace && (
         <PhotoViewerOverlay
           // 폴백 장소(-1)는 로그인 전 테스트용이라 2장 하드코딩.
-          photos={viewingPhotoPlace.id === -1 ? [image1, image2] : getPlacePhotos(viewingPhotoPlace)}
+          photos={
+            viewingPhotoPlace.id === -1 ? [image1, image2] : getPlacePhotos(viewingPhotoPlace)
+          }
           onClose={() => setViewingPhotoPlaceId(null)}
         />
       )}
