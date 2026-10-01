@@ -1,10 +1,9 @@
 import '@/global.css';
 
 import { useFonts } from 'expo-font';
-import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
+import { DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useState } from 'react';
-import { useColorScheme } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { hydrateSession } from '@/api/session';
@@ -13,7 +12,6 @@ import WebFrame from '@/components/global/WebFrame';
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
   const [fontsLoaded, fontError] = useFonts({
     'GmarketSans-Light': require('../../assets/fonts/GmarketSans-Light.otf'),
     'GmarketSans-Medium': require('../../assets/fonts/GmarketSans-Medium.otf'),
@@ -37,7 +35,7 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+      <ThemeProvider value={DefaultTheme}>
         <WebFrame>
           <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="(tabs)" />

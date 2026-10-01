@@ -24,7 +24,7 @@ const CheckboxText = ({ text, checkedColor = '#29D9CE' }: CheckboxTextProps) => 
       >
         {checked && <Image source={checkIcon} style={{ width: 12, height: 9 }} />}
       </View>
-      <ThemedText className="text-md text-gray-500 dark:text-text-dark">{text}</ThemedText>
+      <ThemedText className="text-md text-gray-500">{text}</ThemedText>
     </Pressable>
   );
 };
