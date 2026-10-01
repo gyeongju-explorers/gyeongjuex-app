@@ -13,6 +13,8 @@ export type Place = {
   longitude: number | null;
   distance: number | null;
   isCompleted: boolean;
+  // 내가 이 장소에서 미션 인증하며 찍은 사진들 — GET /api/places에서만 내려온다.
+  missionPhotos?: string[];
 };
 
 export async function getPlaces(params?: { lat?: number; lng?: number }): Promise<Place[]> {

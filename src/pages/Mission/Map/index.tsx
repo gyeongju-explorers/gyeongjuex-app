@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import type { Place } from '@/api/places';
 import myLocationIcon from '@/assets/icons/my-location.svg';
 import image1 from '@/assets/images/image1.png';
 import image2 from '@/assets/images/image2.png';
@@ -21,6 +22,14 @@ import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 import { useMissionMapData } from './useMissionMapData';
 
 const GYEONGJU_CENTER = { latitude: 35.8354, longitude: 129.2194 };
+
+// 내가 미션 인증하며 찍은 사진 우선, 없으면 장소 대표 사진으로 폴백.
+function getPlacePhotos(place: Place) {
+  if (place.missionPhotos && place.missionPhotos.length > 0) {
+    return place.missionPhotos.map((uri) => ({ uri }));
+  }
+  return [place.image ? { uri: place.image } : image1];
+}
 
 export default function MissionMap() {
   const {
@@ -85,7 +94,10 @@ export default function MissionMap() {
                 height={140}
                 onTap={() => setViewingPhotoPlaceId(place.id)}
               >
-                <PhotoMarker photos={[place.image ? { uri: place.image } : image1]} active />
+                <PhotoMarker
+                  photos={getPlacePhotos(place).slice(0, 2) as Parameters<typeof PhotoMarker>[0]['photos']}
+                  active
+                />
               </NaverMapMarkerOverlay>
             ) : (
               <NaverMapMarkerOverlay
@@ -134,12 +146,8 @@ export default function MissionMap() {
       )}
       {viewingPhotoPlace && (
         <PhotoViewerOverlay
-          // TODO: photo 테이블에서 실제 여러 장을 받아오도록 교체 — 지금은 폴백 장소(-1)에 테스트용 2장만 하드코딩.
-          photos={
-            viewingPhotoPlace.id === -1
-              ? [image1, image2]
-              : [viewingPhotoPlace.image ? { uri: viewingPhotoPlace.image } : image1]
-          }
+          // 폴백 장소(-1)는 로그인 전 테스트용이라 2장 하드코딩.
+          photos={viewingPhotoPlace.id === -1 ? [image1, image2] : getPlacePhotos(viewingPhotoPlace)}
           onClose={() => setViewingPhotoPlaceId(null)}
         />
       )}

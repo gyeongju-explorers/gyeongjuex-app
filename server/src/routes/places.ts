@@ -20,6 +20,11 @@ interface PlaceWithCompletionRow extends PlaceRow {
   is_completed: number;
 }
 
+interface MissionPhotoRow extends RowDataPacket {
+  place_id: number;
+  image_url: string;
+}
+
 interface PlaceDetailRow extends RowDataPacket {
   id: number;
   name: string;
@@ -72,6 +77,20 @@ router.get('/places', requireAuth, async (req: AuthedRequest, res) => {
           [req.userId]
         );
 
+    // 지도 포토마커/사진 뷰어용 — 장소별로 내가 미션 인증하며 찍은 사진(오래된 순).
+    const [photoRows] = await pool.query<MissionPhotoRow[]>(
+      `SELECT place_id, image_url FROM photo
+       WHERE user_id = ? AND type = 'MISSION' AND place_id IS NOT NULL
+       ORDER BY id ASC`,
+      [req.userId]
+    );
+    const missionPhotosByPlace = new Map<number, string[]>();
+    for (const photo of photoRows) {
+      const list = missionPhotosByPlace.get(photo.place_id) ?? [];
+      list.push(photo.image_url);
+      missionPhotosByPlace.set(photo.place_id, list);
+    }
+
     const places = rows.map((row) => ({
       id: row.id,
       name: row.name,
@@ -83,6 +102,7 @@ router.get('/places', requireAuth, async (req: AuthedRequest, res) => {
       longitude: row.longitude,
       distance: row.distance_km !== null ? Math.round(row.distance_km * 10) / 10 : null,
       isCompleted: Boolean(row.is_completed),
+      missionPhotos: missionPhotosByPlace.get(row.id) ?? [],
     }));
 
     res.json({ places });

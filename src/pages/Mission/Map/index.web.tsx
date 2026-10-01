@@ -64,9 +64,17 @@ const COMPLETED_PIN_OVERLAP = 14;
 
 // 완료한 장소는 대표 사진 + 핀 아이콘을, 미완료 장소는 기존 마커 아이콘을 그대로 재사용해
 // HTML 오버레이로 그린다.
+// 내가 미션 인증하며 찍은 사진 우선, 없으면 장소 대표 사진으로 폴백.
+function getPlacePhotos(place: Place) {
+  if (place.missionPhotos && place.missionPhotos.length > 0) {
+    return place.missionPhotos.map((uri) => ({ uri }));
+  }
+  return [place.image ? { uri: place.image } : image1];
+}
+
 function buildMarkerIcon(place: Place, isSelected: boolean) {
   if (place.isCompleted) {
-    const photoUrl = place.image ?? Asset.fromModule(image1).uri;
+    const photoUrl = place.missionPhotos?.[0] ?? place.image ?? Asset.fromModule(image1).uri;
     const pinUri = Asset.fromModule(markerActiveIcon).uri;
     const pinTop = COMPLETED_PHOTO_HEIGHT - COMPLETED_PIN_OVERLAP;
     const totalHeight = pinTop + COMPLETED_PIN_SIZE;
@@ -262,12 +270,8 @@ export default function MissionMap() {
       )}
       {viewingPhotoPlace && (
         <PhotoViewerOverlay
-          // TODO: photo 테이블에서 실제 여러 장을 받아오도록 교체 — 지금은 폴백 장소(-1)에 테스트용 2장만 하드코딩.
-          photos={
-            viewingPhotoPlace.id === -1
-              ? [image1, image2]
-              : [viewingPhotoPlace.image ? { uri: viewingPhotoPlace.image } : image1]
-          }
+          // 폴백 장소(-1)는 로그인 전 테스트용이라 2장 하드코딩.
+          photos={viewingPhotoPlace.id === -1 ? [image1, image2] : getPlacePhotos(viewingPhotoPlace)}
           onClose={() => setViewingPhotoPlaceId(null)}
         />
       )}
